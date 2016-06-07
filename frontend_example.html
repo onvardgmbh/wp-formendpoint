@@ -1,0 +1,88 @@
+<form class="contactform">
+	<div class="row">
+		<div class="col-md-6 col-sm-12 inputcol">
+			<input name="name" type="text" placeholder="Name">
+			<input name="mail" type="email" placeholder="E-Mail">
+			<input name="message" type="text" placeholder="Your Message" value="Type your message here.">
+		</div>
+		<div class="col-md-6 col-sm-12 inputcol">
+			<input name="nachname" type="text" placeholder="Nachname">
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6 col-sm-12 inputcol">
+			<input name="Telefonnummer" type="text" placeholder="Telefonnummer">
+		</div>
+		<div class="col-md-6 col-sm-12 inputcol">
+			<input name="E-Mail" type="email" placeholder="E-Mail">
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-12 inputcol">
+			<textarea name="nachricht" placeholder="Ihre Nachricht"></textarea>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-12 col-sm-9 form-message">
+		</div>
+		<div class="col-xs-12 col-sm-3">
+			<input type="submit" class="btn btn-light" value="absenden">
+		</div>
+	</div>
+</form>
+<div class="form-success">
+	<h2>Ihre Nachricht wurde erfolgreich übermittelt.</h2>
+</div>
+
+<script type="text/javascript">
+;(function(){
+    var form, formMessage, formSuccess;
+    var setup = function() {
+        form = document.querySelector('form.contactform');
+		formMessage = document.querySelector('.form-message');
+		formSuccess = document.querySelector('.form-success');
+        form.addEventListener("submit", function(event){
+        	event.preventDefault();
+        	var request = new XMLHttpRequest();
+			request.open('POST', '/wp-admin/admin-ajax.php', true);
+			request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+			request.onload = function() {
+				if (this.status == 200) {
+					form.style.display = 'none';
+					formSuccess.style.display = 'block';
+					formSuccess.innerHTML = formSuccess.innerHTML + this.response;
+				} else {
+					formMessage.innerHTML = this.response;
+				}
+			};
+			request.onerror = function() {
+				formMessage.innerHTML = 'Error';
+			};
+			request.send(serialize(this) + '&action=formentry&security=' + MyAjax.security);
+        });
+    };
+
+	var serialize = function (form) {
+	    var field, l, s = [];
+	    if (typeof form == 'object' && form.nodeName == "FORM") {
+	        var len = form.elements.length;
+	        for (var i=0; i<len; i++) {
+	            field = form.elements[i];
+	            if (field.name && !field.disabled && field.type != 'file' && field.type != 'reset' && field.type != 'submit' && field.type != 'button') {
+	                if (field.type == 'select-multiple') {
+	                    l = form.elements[i].options.length; 
+	                    for (var j=0; j<l; j++) {
+	                        if(field.options[j].selected)
+	                            s[s.length] = encodeURIComponent(field.name) + "=" + encodeURIComponent(field.options[j].value);
+	                    }
+	                } else if ((field.type != 'checkbox' && field.type != 'radio') || field.checked) {
+	                    s[s.length] = encodeURIComponent(field.name) + "=" + encodeURIComponent(field.value);
+	                }
+	            }
+	        }
+	    }
+	    return s.join('&').replace(/%20/g, '+');
+	}
+    window.addEventListener('DOMContentLoaded', setup);
+}());
+</script>

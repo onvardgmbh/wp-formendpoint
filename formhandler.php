@@ -1,0 +1,197 @@
+<?php
+Namespace Onvardgmbh\Formendpoint;
+
+Class Formendpoint {
+
+	public $posttype;
+	public $heading;
+	public $recipients;
+	public $fields;
+	public $honeypots;
+
+
+	public static function make($posttype, $heading) {
+		return new Formendpoint($posttype, $heading);
+	}
+
+	function __construct($posttype, $heading) {
+		$this->posttype = $posttype;
+		$this->heading = $heading;
+		$this->recipients = [];
+		$this->fields = [];
+		$this->honeypots = [];
+
+		add_action( 'init', array($this, 'dates_post_type_init') );
+		add_action( 'add_meta_boxes', array($this, 'adding_custom_meta_boxes') );
+		add_action( 'wp_enqueue_scripts', function() {
+			wp_localize_script( 'main', $posttype, array(
+				// URL to wp-admin/admin-ajax.php to process the request
+				'ajaxurl' => admin_url( 'admin-ajax.php' ),
+				// generate a nonce with a unique ID "myajax-post-comment-nonce"
+				// so that you can check it later when an AJAX request is sent
+				'security' => wp_create_nonce( $posttype )
+			));
+		});
+		add_action( 'wp_ajax_formsubmit', array($this, 'handleformsubmit') );
+		add_action( 'wp_ajax_nopriv_formsubmit', array($this, 'handleformsubmit') );
+	}
+
+	public function add_honeypots($honeypots) {
+		foreach($honeypots as $honeypot) {
+			$this->honeypots[] = $honeypot;
+		}
+		return $this;
+	}
+
+	public function add_fields($fields) {
+		foreach($fields as $field) {
+			$this->fields[] = $field;
+		}
+		return $this;
+	}
+
+	public function send_mail_to($recipient) {
+		$this->recipients[] = $recipient;
+		return $this;
+	}
+
+	public function handleformsubmit() {
+		check_ajax_referer( $posttype, 'security' );
+		unset($_POST['security']);
+		unset($_POST['action']);
+
+		foreach($this->honeypots as $honeypot) {
+			if(!isset($_POST[$honeypot->name]) || $_POST[$honeypot->name] !== $honeypot->equals) {
+				wp_die($honeypot->name);
+			}
+			unset($_POST[$honeypot->name]);
+		}
+
+		$names = array_map(create_function('$o', 'return $o->name;'), $this->fields);
+
+		foreach ($_POST as $key => $value) {
+			if(!in_array($key, $names)) {
+				unset($_POST[$key]);
+			}
+		}
+
+		foreach ($this->fields as $field) {
+			if(isset($field->required) && empty($_POST[$field->name])) {
+				echo 'Field "' . $field->name . '"is required';
+				status_header(400);
+				wp_die();
+			}
+			if($field->type === 'email' && (isset($field->required) || !empty($_POST[$field->name])) && !is_email( $_POST[$field->name] )) {
+				echo $_POST[$field->name] . ' is not a valid email address.';
+				status_header(400);
+				wp_die();
+			}
+		}
+		$post_id = wp_insert_post( [
+			'post_title'    => $_POST['name'] . ' ' . $_POST['nachname'],
+			'post_status'   => 'publish',
+			'post_type' => $this->posttype,
+		] );
+		foreach ($_POST as $key => $value) {
+			add_post_meta($post_id, $key, esc_html($value));
+		}
+		foreach ($_POST as $key => $value) {
+			echo '<p><b>'. esc_html($key) . ':</b> ' . nl2br(esc_html($value)) . '</p>';
+		}
+
+        $subject = 'Formular angereicht';
+        $message = '';
+		foreach ($_POST as $key => $value) {
+			$message .= '<p><b>'. esc_html($key) . ':</b> ' . nl2br(esc_html($value)) . '</p>';
+		}
+        $headers = [];
+        //$headers[] = 'From: My Name <myname@example.com>' . "\r\n";
+        $headers[] = 'Content-Type: text/html; charset=UTF-8';
+		foreach($this->recipients as $recipient) {
+			wp_mail( $recipient, $subject, $message, $headers);
+		}
+		wp_die();
+	}
+
+	public function dates_post_type_init() {
+		register_post_type( $this->posttype, [
+			'labels'        => array(
+				'name'               => _x( 'Eintrag', 'post type general name' ),
+				'singular_name'      => _x( 'Eintrag', 'post type singular name' ),
+				//'add_new'            => _x( 'Add New', 'book' ),
+				'add_new_item'       => __( 'Neuer Eintrag' ),
+				'edit_item'          => __( 'Eintrag bearbeiten' ),
+				'new_item'           => __( 'Neuer Eintrag' ),
+				'all_items'          => __( 'Alle Einträge' ),
+				'view_item'          => __( 'Eintrag ansehen' ),
+				'search_items'       => __( 'Einträge durchsuchen' ),
+				'not_found'          => __( 'Keinen Eintrag gefunden' ),
+				'not_found_in_trash' => __( 'Keine Einträge im Papierkorb gefunden' ),
+				'parent_item_colon'  => '',
+				'menu_name'          => 'Einträge'
+			),
+			'public'        => false,
+			'show_ui' => true,
+			'menu_icon' => 'dashicons-email',
+			'supports'      => array(''),
+			'has_archive'   => false,
+			'capabilities' => array(
+				'create_posts' => 'do_not_allow'
+			),
+			'map_meta_cap' => true, // Set to `false`, if users are not allowed to edit/delete existing posts
+		] );
+	}
+	public function adding_custom_meta_boxes( $post ) {
+		add_meta_box(
+			'my-meta-box',
+			__( 'Eintrag' ),
+			function() {
+				global $post;
+				echo $post->post_content;
+				$post_meta = get_post_custom();
+				foreach ($post_meta as $key => $value) {
+					if($key !== '_edit_lock') {
+						echo '<h3>'.$key.'</h3>';
+						foreach ($value as $content) {
+							echo '<p>'.nl2br($content).'</p>';
+						}
+					}
+				}
+			},
+			$this->posttype,
+			'normal',
+			'default'
+		);
+	}
+}
+
+Class Input {
+
+	public $name;
+	public $required;
+
+	public static function make($type, $name) {
+		$input = new Input();
+		$input->name = $name;
+		$input->type = $type;
+		return $input;
+	}
+
+	public function required() {
+		$this->required = true;
+		return $this;
+	}
+}
+
+Class Honeypot {
+
+	public $name;
+	public $equals;
+
+	public static function make($name, $equals) {
+		$input = new Honeypot();
+		$input->name = $name;
+		$input->equals = $equals;
+		return $input;
+	}
+}

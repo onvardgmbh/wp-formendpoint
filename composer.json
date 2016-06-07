@@ -1,0 +1,13 @@
+{
+    "name": "onvardgmbh/wp-formendpoint",
+    "description": "A endpoint for forms in Wordpress themes.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Björn Hasse",
+            "email": "hasse@onvard.de"
+        }
+    ],
+    "require": {}
+}
