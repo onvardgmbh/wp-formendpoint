@@ -32,8 +32,8 @@ Class Formendpoint {
 				'security' => wp_create_nonce( $this->posttype )
 			));
 		});
-		add_action( 'wp_ajax_formsubmit', array($this, 'handleformsubmit') );
-		add_action( 'wp_ajax_nopriv_formsubmit', array($this, 'handleformsubmit') );
+		add_action( 'wp_ajax_' . $this->posttype, array($this, 'handleformsubmit') );
+		add_action( 'wp_ajax_nopriv_' . $this->posttype, array($this, 'handleformsubmit') );
 	}
 
 	public function add_honeypots($honeypots) {
