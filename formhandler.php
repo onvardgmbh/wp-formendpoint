@@ -24,12 +24,12 @@ Class Formendpoint {
 		add_action( 'init', array($this, 'dates_post_type_init') );
 		add_action( 'add_meta_boxes', array($this, 'adding_custom_meta_boxes') );
 		add_action( 'wp_enqueue_scripts', function() {
-			wp_localize_script( 'main', $posttype, array(
+			wp_localize_script( 'main', $this->posttype, array(
 				// URL to wp-admin/admin-ajax.php to process the request
 				'ajaxurl' => admin_url( 'admin-ajax.php' ),
 				// generate a nonce with a unique ID "myajax-post-comment-nonce"
 				// so that you can check it later when an AJAX request is sent
-				'security' => wp_create_nonce( $posttype )
+				'security' => wp_create_nonce( $this->posttype )
 			));
 		});
 		add_action( 'wp_ajax_formsubmit', array($this, 'handleformsubmit') );
@@ -56,7 +56,7 @@ Class Formendpoint {
 	}
 
 	public function handleformsubmit() {
-		check_ajax_referer( $posttype, 'security' );
+		check_ajax_referer( $this->posttype, 'security' );
 		unset($_POST['security']);
 		unset($_POST['action']);
 
