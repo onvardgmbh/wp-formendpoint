@@ -8,6 +8,7 @@ Class Formendpoint {
 	public $recipients;
 	public $fields;
 	public $honeypots;
+	public $entryTitle;
 
 
 	public static function make($posttype, $heading) {
@@ -20,6 +21,7 @@ Class Formendpoint {
 		$this->recipients = [];
 		$this->fields = [];
 		$this->honeypots = [];
+		$this->entryTitle = '';
 
 		add_action( 'init', array($this, 'dates_post_type_init') );
 		add_action( 'add_meta_boxes', array($this, 'adding_custom_meta_boxes') );
@@ -74,7 +76,6 @@ Class Formendpoint {
 				unset($_POST[$key]);
 			}
 		}
-
 		foreach ($this->fields as $field) {
 			if(isset($field->required) && empty($_POST[$field->name])) {
 				echo 'Field "' . $field->name . '"is required';
@@ -86,9 +87,12 @@ Class Formendpoint {
 				status_header(400);
 				wp_die();
 			}
+			if(isset($field->title)) {
+				$this->entryTitle .= $_POST[$field->name] . ' ';
+			}
 		}
 		$post_id = wp_insert_post( [
-			'post_title'    => $_POST['name'] . ' ' . $_POST['nachname'],
+			'post_title'    => $this->entryTitle,
 			'post_status'   => 'publish',
 			'post_type' => $this->posttype,
 		] );
@@ -169,6 +173,7 @@ Class Input {
 
 	public $name;
 	public $required;
+	public $title;
 
 	public static function make($type, $name) {
 		$input = new Input();
@@ -179,6 +184,11 @@ Class Input {
 
 	public function required() {
 		$this->required = true;
+		return $this;
+	}
+
+	public function setTitle() {
+		$this->title = true;
 		return $this;
 	}
 }
