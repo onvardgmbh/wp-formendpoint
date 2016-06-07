@@ -9,6 +9,10 @@ Class Formendpoint {
 	public $fields;
 	public $honeypots;
 	public $entryTitle;
+	public $confirmation_mailadress;
+	public $confirmation_subject;
+	public $confirmation_text1;
+	public $confirmation_text2;
 
 
 	public static function make($posttype, $heading) {
@@ -54,6 +58,14 @@ Class Formendpoint {
 
 	public function send_mail_to($recipient) {
 		$this->recipients[] = $recipient;
+		return $this;
+	}
+
+	public function send_confirmation_mail($email, $subject, $text1, $text2) {
+		$this->confirmation_subject = $subject;
+		$this->confirmation_text1 = $text1;
+		$this->confirmation_text2 = $text2;
+		$this->confirmation_mailadress = $email;
 		return $this;
 	}
 
@@ -113,6 +125,18 @@ Class Formendpoint {
         $headers[] = 'Content-Type: text/html; charset=UTF-8';
 		foreach($this->recipients as $recipient) {
 			wp_mail( $recipient, $subject, $message, $headers);
+		}
+		if(isset($this->confirmation_mailadress) 
+		&& isset($_POST[$this->confirmation_mailadress]) 
+		&& is_email( $_POST[$this->confirmation_mailadress] )
+		&& isset($this->confirmation_subject) 
+		&& isset($this->confirmation_text1)) {
+			$content = ($this->confirmation_text1)();
+			if(isset($this->confirmation_text2)) {
+				$content .= $message;
+				$content .= ($this->confirmation_text2)();
+			}
+			wp_mail( $_POST[$this->confirmation_mailadress], ($this->confirmation_subject)(), $content, $headers);
 		}
 		wp_die();
 	}
