@@ -22,13 +22,7 @@ Formendpoint::make('formentry', 'Form')
 		Input::make('email', 'mail')
 	])
 	->add_actions([
-		Email::make('admin@example.de', 'Contactform Subject', function() {
-			$message = '';
-			foreach ($_POST as $key => $value) {
-				$message .= '<p><b>'. esc_html($key) . ':</b> ' . nl2br(esc_html($value)) . '</p>';
-			}
-			return $message;
-		})
+		Email::make('admin@example.de', 'Contactform Subject', 'A new contactform was submitted. Log in to the wordpress backend to read the message.')
 	]);
 ```
 
