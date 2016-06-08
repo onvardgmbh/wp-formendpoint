@@ -7,6 +7,7 @@ Class Formendpoint {
 	public $heading;
 	public $recipients;
 	public $fields;
+	public $actions;
 	public $honeypots;
 	public $entryTitle;
 	public $confirmation_mailadress;
@@ -23,6 +24,7 @@ Class Formendpoint {
 		$this->posttype = $posttype;
 		$this->heading = $heading;
 		$this->recipients = [];
+		$this->actions = [];
 		$this->fields = [];
 		$this->honeypots = [];
 		$this->entryTitle = '';
@@ -40,6 +42,13 @@ Class Formendpoint {
 		});
 		add_action( 'wp_ajax_' . $this->posttype, array($this, 'handleformsubmit') );
 		add_action( 'wp_ajax_nopriv_' . $this->posttype, array($this, 'handleformsubmit') );
+	}
+
+	public function add_actions($actions) {
+		foreach($actions as $action) {
+			$this->actions[] = $action;
+		}
+		return $this;
 	}
 
 	public function add_honeypots($honeypots) {
@@ -123,20 +132,34 @@ Class Formendpoint {
         $headers = [];
         //$headers[] = 'From: My Name <myname@example.com>' . "\r\n";
         $headers[] = 'Content-Type: text/html; charset=UTF-8';
-		foreach($this->recipients as $recipient) {
-			wp_mail( $recipient, $subject, $message, $headers);
-		}
-		if(isset($this->confirmation_mailadress) 
-		&& isset($_POST[$this->confirmation_mailadress]) 
-		&& is_email( $_POST[$this->confirmation_mailadress] )
-		&& isset($this->confirmation_subject) 
-		&& isset($this->confirmation_text1)) {
-			$content = ($this->confirmation_text1)();
-			if(isset($this->confirmation_text2)) {
-				$content .= $message;
-				$content .= ($this->confirmation_text2)();
+		foreach($this->actions as $action) {
+			if(get_class($action) === 'Onvardgmbh\Formendpoint\Email') {
+				if(gettype($action->recipient) === 'object') {
+					$recipient = ($action->recipient)();
+					if(!$recipient) {
+						continue;
+					}
+				} else {
+					$recipient = $action->recipient;
+				}
+				if(gettype($action->subject) === 'object') {
+					$subject = ($action->subject)();
+					if(!$subject) {
+						continue;
+					}
+				} else {
+					$subject = $action->subject;
+				}
+				if(gettype($action->body) === 'object') {
+					$body = ($action->body)();
+					if(!$body) {
+						continue;
+					}
+				} else {
+					$body = $action->body;
+				}
+				wp_mail( $recipient, $subject, $body, $headers);
 			}
-			wp_mail( $_POST[$this->confirmation_mailadress], ($this->confirmation_subject)(), $content, $headers);
 		}
 		wp_die();
 	}
@@ -190,6 +213,21 @@ Class Formendpoint {
 			'normal',
 			'default'
 		);
+	}
+}
+
+Class Email {
+
+	public $recipient;
+	public $subject;
+	public $body;
+
+	public static function make($recipient, $subject, $body) {
+		$action = new Email();
+		$action->recipient = $recipient;
+		$action->subject = $subject;
+		$action->body = $body;
+		return $action;
 	}
 }
 
