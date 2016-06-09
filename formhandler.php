@@ -100,7 +100,7 @@ Class Formendpoint {
 			}
 		}
 		foreach ($this->fields as $field) {
-			if(isset($field->required) && empty($_POST[$field->name])) {
+			if(isset($field->required) && $_POST[$field->name] === '') {
 				echo 'Field "' . $field->name . '"is required';
 				status_header(400);
 				wp_die();
