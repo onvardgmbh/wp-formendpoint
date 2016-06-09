@@ -84,8 +84,8 @@ Creates the formendpoint with a menu item in the wordpress backend.
 Registers the form input fields. The form only accepts and saves registered inputs. If a required inputs is missing the form fails.
 
 Input types:
- - 'text'
- - 'email'
+ - text
+ - email
 
 ### add_honeypots($honeypots)
 ```php

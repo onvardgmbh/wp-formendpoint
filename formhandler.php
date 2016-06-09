@@ -159,6 +159,8 @@ Class Formendpoint {
 					$body = $action->body;
 				}
 				wp_mail( $recipient, $subject, $body, $headers);
+			} else if(get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
+				($action->function)();
 			}
 		}
 		wp_die();
@@ -213,6 +215,17 @@ Class Formendpoint {
 			'normal',
 			'default'
 		);
+	}
+}
+
+Class Callback {
+
+	public $function;
+
+	public static function make($function) {
+		$action = new Callback();
+		$action->function = $function;
+		return $action;
 	}
 }
 
