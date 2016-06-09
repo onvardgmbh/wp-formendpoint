@@ -112,4 +112,4 @@ Adds form actions which will be called when the form is successfully submitted.
 
 #### Callback::make($function)
 
- - $function: anonymous function returning string or array
+ - $function: anonymous function
