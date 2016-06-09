@@ -5,6 +5,7 @@ Class Formendpoint {
 
 	public $posttype;
 	public $heading;
+	public $style;
 	public $recipients;
 	public $fields;
 	public $actions;
@@ -16,13 +17,14 @@ Class Formendpoint {
 	public $confirmation_text2;
 
 
-	public static function make($posttype, $heading) {
-		return new Formendpoint($posttype, $heading);
+	public static function make($posttype, $heading, $style = 'main') {
+		return new Formendpoint($posttype, $heading, $style );
 	}
 
-	function __construct($posttype, $heading) {
+	function __construct($posttype, $heading, $style) {
 		$this->posttype = $posttype;
 		$this->heading = $heading;
+		$this->style = $style;
 		$this->recipients = [];
 		$this->actions = [];
 		$this->fields = [];
@@ -32,7 +34,7 @@ Class Formendpoint {
 		add_action( 'init', array($this, 'dates_post_type_init') );
 		add_action( 'add_meta_boxes', array($this, 'adding_custom_meta_boxes') );
 		add_action( 'wp_enqueue_scripts', function() {
-			wp_localize_script( 'main', $this->posttype, array(
+			wp_localize_script( $this->style, $this->posttype, array(
 				// URL to wp-admin/admin-ajax.php to process the request
 				'ajaxurl' => admin_url( 'admin-ajax.php' ),
 				// generate a nonce with a unique ID "myajax-post-comment-nonce"
