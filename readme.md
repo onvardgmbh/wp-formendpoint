@@ -103,8 +103,13 @@ Registers honeypots to the form. The form submission fails if a bot submits a di
 ```
 Adds form actions which will be called when the form is successfully submitted.
 
-Type $recipient: string || array || anonymous function returning string or array
 
-Type $subject: string || anonymous function returning string
+#### Email::make($recipient, $subject, $body)
 
-Type $body: string || anonymous function returning string
+ - $recipient: string || array || anonymous function returning string or array
+ - $subject: string || anonymous function returning string
+ - $body: string || anonymous function returning string
+
+#### Callback::make($function)
+
+ - $function: anonymous function returning string or array
