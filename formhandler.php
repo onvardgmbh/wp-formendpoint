@@ -120,7 +120,13 @@ Class Formendpoint {
 			'post_type' => $this->posttype,
 		] );
 		foreach ($_POST as $key => $value) {
-			add_post_meta($post_id, $key, esc_html($value));
+            if(is_array($value)) {
+                foreach ($value as $index => $item) {
+					add_post_meta($post_id, $key . $index, esc_html($item));
+                }
+            } else {
+				add_post_meta($post_id, $key, esc_html($value));
+            }
 		}
 
         $subject = 'Formular angereicht';
