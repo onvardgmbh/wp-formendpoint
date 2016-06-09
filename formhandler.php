@@ -130,10 +130,6 @@ Class Formendpoint {
 		}
 
         $subject = 'Formular angereicht';
-        $message = '';
-		foreach ($_POST as $key => $value) {
-			$message .= '<p><b>'. esc_html($key) . ':</b> ' . nl2br(esc_html($value)) . '</p>';
-		}
         $headers = [];
         //$headers[] = 'From: My Name <myname@example.com>' . "\r\n";
         $headers[] = 'Content-Type: text/html; charset=UTF-8';
