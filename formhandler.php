@@ -122,9 +122,6 @@ Class Formendpoint {
 		foreach ($_POST as $key => $value) {
 			add_post_meta($post_id, $key, esc_html($value));
 		}
-		foreach ($_POST as $key => $value) {
-			echo '<p><b>'. esc_html($key) . ':</b> ' . nl2br(esc_html($value)) . '</p>';
-		}
 
         $subject = 'Formular angereicht';
         $message = '';
