@@ -182,7 +182,7 @@ Class Formendpoint {
 				'not_found'          => __( 'Keinen Eintrag gefunden' ),
 				'not_found_in_trash' => __( 'Keine Einträge im Papierkorb gefunden' ),
 				'parent_item_colon'  => '',
-				'menu_name'          => 'Einträge'
+				'menu_name'          => $this->heading
 			),
 			'public'        => false,
 			'show_ui' => true,
