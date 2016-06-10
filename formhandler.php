@@ -205,7 +205,9 @@ Class Formendpoint {
 				$post_meta = get_post_custom();
 				foreach ($post_meta as $key => $value) {
 					if($key !== '_edit_lock') {
-						echo '<h3>'.$key.'</h3>';
+						$echo = preg_replace('/[A-Z][a-z]/', ' ${0}${1}', $key);
+						$echo = preg_replace('/^\s/', '', $echo);
+						echo '<h3>'.$echo.'</h3>';
 						foreach ($value as $content) {
 							echo '<p>'.nl2br($content).'</p>';
 						}
