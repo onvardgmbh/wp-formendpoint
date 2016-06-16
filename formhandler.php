@@ -6,15 +6,11 @@ Class Formendpoint {
 	public $posttype;
 	public $heading;
 	public $style;
-	public $recipients;
 	public $fields;
 	public $actions;
 	public $honeypots;
 	public $entryTitle;
-	public $confirmation_mailadress;
-	public $confirmation_subject;
-	public $confirmation_text1;
-	public $confirmation_text2;
+	public $show_ui;
 
 
 	public static function make($posttype, $heading, $style = 'main') {
@@ -25,11 +21,11 @@ Class Formendpoint {
 		$this->posttype = $posttype;
 		$this->heading = $heading;
 		$this->style = $style;
-		$this->recipients = [];
 		$this->actions = [];
 		$this->fields = [];
 		$this->honeypots = [];
 		$this->entryTitle = '';
+		$this->show_ui = true;
 
 		add_action( 'init', array($this, 'dates_post_type_init') );
 		add_action( 'add_meta_boxes', array($this, 'adding_custom_meta_boxes') );
@@ -67,16 +63,8 @@ Class Formendpoint {
 		return $this;
 	}
 
-	public function send_mail_to($recipient) {
-		$this->recipients[] = $recipient;
-		return $this;
-	}
-
-	public function send_confirmation_mail($email, $subject, $text1, $text2) {
-		$this->confirmation_subject = $subject;
-		$this->confirmation_text1 = $text1;
-		$this->confirmation_text2 = $text2;
-		$this->confirmation_mailadress = $email;
+	public function show_ui($show_ui) {
+		$this->show_ui = $show_ui;
 		return $this;
 	}
 
@@ -185,7 +173,7 @@ Class Formendpoint {
 				'menu_name'          => $this->heading
 			),
 			'public'        => false,
-			'show_ui' => true,
+			'show_ui' => $this->show_ui,
 			'menu_icon' => 'dashicons-email',
 			'supports'      => array(''),
 			'has_archive'   => false,
