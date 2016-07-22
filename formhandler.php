@@ -58,7 +58,7 @@ Class Formendpoint {
 
 	public function add_fields($fields) {
 		foreach($fields as $field) {
-			$this->fields[] = $field;
+			$this->fields[$field->name] = $field;
 		}
 		return $this;
 	}
@@ -80,10 +80,8 @@ Class Formendpoint {
 			unset($_POST[$honeypot->name]);
 		}
 
-		$names = array_map(create_function('$o', 'return $o->name;'), $this->fields);
-
 		foreach ($_POST as $key => $value) {
-			if(!in_array($key, $names)) {
+			if(!isset($this->fields[$key])) {
 				unset($_POST[$key]);
 			}
 		}
@@ -192,10 +190,12 @@ Class Formendpoint {
 				echo $post->post_content;
 				$post_meta = get_post_custom();
 				foreach ($post_meta as $key => $value) {
-					if($key !== '_edit_lock') {
-						$echo = preg_replace('/[A-Z][a-z]/', ' ${0}${1}', $key);
-						$echo = preg_replace('/^\s/', '', $echo);
-						echo '<h3>'.$echo.'</h3>';
+					if(isset($this->fields[$key]) && !isset($this->fields[$key]->hide)) {
+						if($this->fields[$key]->label) {
+							echo '<h3>'.$this->fields[$key]->label.'</h3>';
+						} else {
+							echo '<h3>'.$this->fields[$key]->name.'</h3>';
+						}
 						foreach ($value as $content) {
 							echo '<p>'.nl2br($content).'</p>';
 						}
@@ -239,12 +239,15 @@ Class Input {
 
 	public $name;
 	public $required;
+	public $hide;
 	public $title;
 
-	public static function make($type, $name) {
+	public static function make($type, $name, $label=null) {
 		$input = new Input();
-		$input->name = $name;
 		$input->type = $type;
+		$input->name = $name;
+		$input->label = $label;
+		$input->label = $label;
 		return $input;
 	}
 
@@ -255,6 +258,11 @@ Class Input {
 
 	public function setTitle() {
 		$this->title = true;
+		return $this;
+	}
+
+	public function hide() {
+		$this->hide = true;
 		return $this;
 	}
 }
