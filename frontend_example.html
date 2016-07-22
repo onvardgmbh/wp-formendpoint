@@ -58,7 +58,7 @@
 			request.onerror = function() {
 				formMessage.innerHTML = 'Error';
 			};
-			request.send(serialize(this) + '&action=formentry&security=' + MyAjax.security);
+			request.send(serialize(this) + '&action=formentry&security=' + formentry.security);
         });
     };
 
