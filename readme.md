@@ -16,10 +16,10 @@ Formendpoint::make('formentry', 'Form')
 		Honeypot::make('moretext', 'Type your message here.'),
 	])
 	->add_fields([
-		Input::make('text', 'firstname')->required(),
-		Input::make('text', 'lastname')->required(),
-		Input::make('text', 'phone'),
-		Input::make('email', 'mail')
+		Input::make('text', 'firstname', 'Firstname')->required(),
+		Input::make('text', 'lastname', 'Lastname')->required(),
+		Input::make('text', 'phone', 'Phone'),
+		Input::make('email', 'mail', 'Mail')
 	])
 	->add_actions([
 		Email::make('admin@example.de', 'Contactform Subject', 'A new contactform was submitted.')
@@ -71,8 +71,12 @@ Container::make('theme_options', 'Settings')
 ```
 ## APIs
 
-### Formendpoint::make($posttype, $heading)
+### Formendpoint::make($posttype, $heading, $handle = 'main')
 Creates the formendpoint with a menu item in the wordpress backend.
+
+ - $posttype: string - Name of the post type that will be used for the form entries.
+ - $heading: string - Name of the Menu Item for displaying the form entries.
+ - $handle: string (optional) - Name of the registered script that handles the form submit in the frontend.
 
 ### add_fields($inputs)
 ```php
@@ -82,10 +86,11 @@ Creates the formendpoint with a menu item in the wordpress backend.
 	]);
 ```
 Registers the form input fields. The form only accepts and saves registered inputs. If a required inputs is missing the form fails.
+#### Input::make($type, $name, $label=null)
 
-Input types:
- - text
- - email
+ - $type: string ('text' or 'email') - Type 'text' accepts all text input. Type 'email' checks for valid email addresses
+ - $name: string - Name of the input field.
+ - $label: string (optional) - Label displayed when viewing the form entry in the backend.
 
 ### add_honeypots($honeypots)
 ```php
