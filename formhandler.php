@@ -11,13 +11,14 @@ Class Formendpoint {
 	public $honeypots;
 	public $entryTitle;
 	public $show_ui;
+	public $textDomain;
 
 
-	public static function make($posttype, $heading, $style = 'main') {
-		return new Formendpoint($posttype, $heading, $style );
+	public static function make($posttype, $heading, $style = 'main', $textDomain = '') {
+		return new Formendpoint($posttype, $heading, $style , $textDomain);
 	}
 
-	function __construct($posttype, $heading, $style) {
+	function __construct($posttype, $heading, $style, $textDomain) {
 		$this->posttype = $posttype;
 		$this->heading = $heading;
 		$this->style = $style;
@@ -26,6 +27,7 @@ Class Formendpoint {
 		$this->honeypots = [];
 		$this->entryTitle = '';
 		$this->show_ui = true;
+		$this->textDomain = $textDomain;
 
 		add_action( 'init', array($this, 'dates_post_type_init') );
 		add_action( 'add_meta_boxes', array($this, 'adding_custom_meta_boxes') );
@@ -168,7 +170,7 @@ Class Formendpoint {
 				'not_found'          => __( 'Keinen Eintrag gefunden' ),
 				'not_found_in_trash' => __( 'Keine Einträge im Papierkorb gefunden' ),
 				'parent_item_colon'  => '',
-				'menu_name'          => $this->heading
+				'menu_name'          => empty($this->textDomain) ? $this->heading : __($this->heading, $this->textDomain)
 			),
 			'public'        => false,
 			'show_ui' => $this->show_ui,
