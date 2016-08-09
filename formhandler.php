@@ -138,7 +138,7 @@ Class Formendpoint {
 					$subject = $action->subject;
 				}
 				if(gettype($action->body) === 'object') {
-					$body = ($action->body)();
+					$body = ($action->body)($post_id, $this->fields);
 					if(!$body) {
 						continue;
 					}
@@ -147,7 +147,7 @@ Class Formendpoint {
 				}
 				wp_mail( $recipient, $subject, $body, $headers);
 			} else if(get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
-				($action->function)($post_id);
+				($action->function)($post_id, $this->fields);
 			}
 		}
 		wp_die();
