@@ -138,16 +138,32 @@ Class Formendpoint {
 					$subject = $action->subject;
 				}
 				if(gettype($action->body) === 'object') {
-					$body = ($action->body)($post_id, $this->fields);
+					$body = ($action->body)();
 					if(!$body) {
 						continue;
 					}
 				} else {
 					$body = $action->body;
 				}
+				$allinputs = '';
+				foreach ($_POST as $key => $value) {
+					if(isset($this->fields[$key]) && !isset($this->fields[$key]->hide)) {
+						if($this->fields[$key]->label) {
+							$allinputs .= '<h3>'.$this->fields[$key]->label.'</h3>';
+						} else {
+							$allinputs .= '<h3>'.$this->fields[$key]->name.'</h3>';
+						}
+						$allinputs .= '<p>'.nl2br(esc_html($value)).'</p>';
+					}
+				}
+				foreach ($this->fields as $key => $value) {
+					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key])), $body);
+					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key])), $subject);
+				}
+				$body = preg_replace('/{{\s*Alle Inputs\s*}}/', $allinputs, $body);
 				wp_mail( $recipient, $subject, $body, $headers);
 			} else if(get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
-				($action->function)($post_id, $this->fields);
+				($action->function)($post_id);
 			}
 		}
 		wp_die();
@@ -226,7 +242,7 @@ Class Email {
 	public $subject;
 	public $body;
 
-	public static function make($recipient, $subject, $body) {
+	public static function make($recipient, $subject, $body = null) {
 		$action = new Email();
 		$action->recipient = $recipient;
 		$action->subject = $subject;
