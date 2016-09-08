@@ -138,7 +138,7 @@ Class Formendpoint {
 					$subject = $action->subject;
 				}
 				if(gettype($action->body) === 'object') {
--					$body = ($action->body)($post_id, $this->fields);
+					$body = ($action->body)($post_id, $this->fields);
 					if(!$body) {
 						continue;
 					}
