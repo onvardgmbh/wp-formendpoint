@@ -11,6 +11,7 @@ Class Formendpoint {
 	public $honeypots;
 	public $entryTitle;
 	public $show_ui;
+	public $validate_function;
 
 
 	public static function make($posttype, $heading, $style = 'main') {
@@ -68,10 +69,19 @@ Class Formendpoint {
 		return $this;
 	}
 
+	public function validate($function) {
+		$this->validate_function = $function;
+		return $this;
+	}
+
 	public function handleformsubmit() {
 		check_ajax_referer( $this->posttype, 'security' );
 		unset($_POST['security']);
 		unset($_POST['action']);
+		if(isset($this->validate_function) && !($this->validate_function)($this->fields)) {
+			status_header(403);
+			wp_die();
+		}
 
 		foreach($this->honeypots as $honeypot) {
 			if(!isset($_POST[$honeypot->name]) || $_POST[$honeypot->name] !== $honeypot->equals) {
