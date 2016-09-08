@@ -163,7 +163,7 @@ Class Formendpoint {
 				$body = preg_replace('/{{\s*Alle Inputs\s*}}/', $allinputs, $body);
 				wp_mail( $recipient, $subject, $body, $headers);
 			} else if(get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
--				($action->function)($post_id, $this->fields);
+				($action->function)($post_id, $this->fields);
 			}
 		}
 		wp_die();
