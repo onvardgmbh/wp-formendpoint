@@ -167,8 +167,8 @@ Class Formendpoint {
 					}
 				}
 				foreach ($this->fields as $key => $value) {
-					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key])), $body);
-					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key])), $subject);
+					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key] ?? '')), $body);
+					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key] ?? '')), $subject);
 				}
 				$body = preg_replace('/{{\s*Alle Inputs\s*}}/', $allinputs, $body);
 				wp_mail( $recipient, $subject, $body, $headers);
