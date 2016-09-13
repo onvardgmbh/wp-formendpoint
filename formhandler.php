@@ -19,6 +19,11 @@ Class Formendpoint {
 	}
 
 	function __construct($posttype, $heading, $style) {
+		if(strlen($posttype) > 20 || preg_match('/\s/',$posttype) || preg_match('/[A-Z]/',$posttype) ) {
+            		echo 'ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.';
+        		return;
+        	}
+        	
 		$this->posttype = $posttype;
 		$this->heading = $heading;
 		$this->style = $style;
