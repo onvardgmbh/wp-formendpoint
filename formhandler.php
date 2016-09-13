@@ -23,8 +23,7 @@ Class Formendpoint {
             		echo 'ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.';
         		return;
         	}
-
-
+        	
 		$this->posttype = $posttype;
 		$this->heading = $heading;
 		$this->style = $style;
