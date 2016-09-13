@@ -11,6 +11,7 @@ Class Formendpoint {
 	public $honeypots;
 	public $entryTitle;
 	public $show_ui;
+	public $validate_function;
 
 
 	public static function make($posttype, $heading, $style = 'main') {
@@ -68,10 +69,19 @@ Class Formendpoint {
 		return $this;
 	}
 
+	public function validate($function) {
+		$this->validate_function = $function;
+		return $this;
+	}
+
 	public function handleformsubmit() {
 		check_ajax_referer( $this->posttype, 'security' );
 		unset($_POST['security']);
 		unset($_POST['action']);
+		if(isset($this->validate_function) && !($this->validate_function)($this->fields)) {
+			status_header(403);
+			wp_die();
+		}
 
 		foreach($this->honeypots as $honeypot) {
 			if(!isset($_POST[$honeypot->name]) || $_POST[$honeypot->name] !== $honeypot->equals) {
@@ -145,6 +155,22 @@ Class Formendpoint {
 				} else {
 					$body = $action->body;
 				}
+				$allinputs = '';
+				foreach ($_POST as $key => $value) {
+					if(isset($this->fields[$key]) && !isset($this->fields[$key]->hide)) {
+						if($this->fields[$key]->label) {
+							$allinputs .= '<h3>'.$this->fields[$key]->label.'</h3>';
+						} else {
+							$allinputs .= '<h3>'.$this->fields[$key]->name.'</h3>';
+						}
+						$allinputs .= '<p>'.nl2br(esc_html($value)).'</p>';
+					}
+				}
+				foreach ($this->fields as $key => $value) {
+					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key])), $body);
+					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key])), $subject);
+				}
+				$body = preg_replace('/{{\s*Alle Inputs\s*}}/', $allinputs, $body);
 				wp_mail( $recipient, $subject, $body, $headers);
 			} else if(get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
 				($action->function)($post_id, $this->fields);
