@@ -3,6 +3,7 @@ Namespace Onvardgmbh\Formendpoint;
 
 Class Formendpoint {
 
+	private $data;
 	public $posttype;
 	public $heading;
 	public $style;
@@ -80,51 +81,45 @@ Class Formendpoint {
 	}
 
 	public function handleformsubmit() {
-		check_ajax_referer( $this->posttype, 'security' );
-		unset($_POST['security']);
-		unset($_POST['action']);
+		if($_SERVER["CONTENT_TYPE"] === 'application/json') {
+			$this->data = json_decode(file_get_contents('php://input'), true);
+		} else {
+			$this->data = $_POST;
+		}
+
+		if(!wp_verify_nonce($this->data['security'], 'security')) {
+			status_header(403);
+			wp_die();
+		}
+
+		unset($this->data['security']);
+		unset($this->data['action']);
 		if(isset($this->validate_function) && !($this->validate_function)($this->fields)) {
 			status_header(403);
 			wp_die();
 		}
 
 		foreach($this->honeypots as $honeypot) {
-			if(!isset($_POST[$honeypot->name]) || $_POST[$honeypot->name] !== $honeypot->equals) {
+			if(!isset($this->data[$honeypot->name]) || $this->data[$honeypot->name] !== $honeypot->equals) {
 				wp_die($honeypot->name);
 			}
-			unset($_POST[$honeypot->name]);
+			unset($this->data[$honeypot->name]);
 		}
 
-		foreach ($_POST as $key => $value) {
-			if(!isset($this->fields[$key])) {
-				unset($_POST[$key]);
-			}
+		foreach ($this->data as $key => $value) {
+			$this->sanitizeField($this->data, $this->fields, $key, $value);
 		}
 		foreach ($this->fields as $field) {
-			if(isset($field->required) && $_POST[$field->name] === '') {
-				echo 'Field "' . $field->name . '"is required';
-				status_header(400);
-				wp_die();
-			}
-			if($field->type === 'email' && (isset($field->required) || !empty($_POST[$field->name])) && !is_email( $_POST[$field->name] )) {
-				echo $_POST[$field->name] . ' is not a valid email address.';
-				status_header(400);
-				wp_die();
-			}
-			if(isset($field->title)) {
-				$this->entryTitle .= $_POST[$field->name] . ' ';
-			}
+			$this->validateField($field, $this->data[$field->name]);
 		}
 		$post_id = wp_insert_post( [
 			'post_title'    => $this->entryTitle,
 			'post_status'   => 'publish',
 			'post_type' => $this->posttype,
 		] );
-		foreach ($_POST as $key => $value) {
+		foreach ($this->data as $key => $value) {
             if(is_array($value)) {
-                foreach ($value as $index => $item) {
-					add_post_meta($post_id, $key . $index, esc_html($item));
-                }
+	            add_post_meta($post_id, $key, json_encode($value));
             } else {
 				add_post_meta($post_id, $key, esc_html($value));
             }
@@ -161,7 +156,7 @@ Class Formendpoint {
 					$body = $action->body;
 				}
 				$allinputs = '';
-				foreach ($_POST as $key => $value) {
+				foreach ($this->data as $key => $value) {
 					if(isset($this->fields[$key]) && !isset($this->fields[$key]->hide)) {
 						if($this->fields[$key]->label) {
 							$allinputs .= '<h3>'.$this->fields[$key]->label.'</h3>';
@@ -172,8 +167,8 @@ Class Formendpoint {
 					}
 				}
 				foreach ($this->fields as $key => $value) {
-					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key] ?? '')), $body);
-					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($_POST[$key] ?? '')), $subject);
+					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($this->data[$key] ?? '')), $body);
+					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($this->data[$key] ?? '')), $subject);
 				}
 				$body = preg_replace('/{{\s*Alle Inputs\s*}}/', $allinputs, $body);
 				wp_mail( $recipient, $subject, $body, $headers);
@@ -182,6 +177,69 @@ Class Formendpoint {
 			}
 		}
 		wp_die();
+
+	}
+
+	private function sanitizeField(&$data, &$fields, $key, $value) {
+		if(!isset($fields[$key])) {
+			unset($data[$key]);
+			return;
+		}
+		if($fields[$key]->type === 'array') {
+			foreach ($value as $subkey => $value2) {
+				foreach ($value2 as $subsubbkey => $value3) {
+					if(!isset($fields[$key]->repeats[$subsubbkey])) {
+						unset($data[$key][$subkey][$subsubbkey]);
+						continue;
+					} elseif(is_array($value3)) {
+//						foreach ($value3 as $data_key => $data_value) {
+//							$this->sanitizeField($data[$key][$subkey][$subsubbkey], $value3, $data_key, $data_value);
+//						}
+						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
+					} else {
+						$data[$key][$subkey][$subsubbkey] = esc_html($data[$key][$subkey][$subsubbkey]);
+					}
+				}
+			}
+		} else {
+			$data[$key] = esc_html($value);
+		}
+	}
+
+	private function validateField($field, $lookup) {
+		if($field->type !== 'array') {
+			if(isset($field->required) && empty($lookup)) {
+				echo 'Field "' . $field->name . '"is required';
+				status_header(400);
+				wp_die();
+			}
+			if($field->type === 'email' && (isset($field->required) || !empty($lookup)) && !is_email( $lookup )) {
+				echo $lookup . ' is not a valid email address.';
+				status_header(400);
+				wp_die();
+			}
+			if(isset($field->title)) {
+				$this->entryTitle .= $this->data[$field->name] . ' ';
+			}
+		} else {
+			if(!is_array($lookup)) {
+				status_header(400);
+				wp_die();
+			}
+			foreach ($lookup as $userinput) {
+				foreach ($field->repeats as $subfield) {
+					if($subfield->type !== 'array') {
+						$this->validateField($subfield, $userinput[$subfield->name]);
+						if(isset($field->title)) {
+							$this->entryTitle .= $userinput[$subfield->name] . ' ';
+						}
+					} else{
+//						$this->validateField($subfield, $userinput[$subfield->name]);
+						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
+					}
+				}
+			}
+		}
 	}
 
 	public function dates_post_type_init() {
@@ -228,7 +286,40 @@ Class Formendpoint {
 							echo '<h3>'.$this->fields[$key]->name.'</h3>';
 						}
 						foreach ($value as $content) {
-							echo '<p>'.nl2br($content).'</p>';
+							if($this->fields[$key]->type !== 'array') {
+								echo '<p>'.nl2br($content).'</p>';
+							} else {
+								$json = json_decode( $content, true);
+								?>
+								<table class="wp-list-table widefat fixed striped" cellspacing="0">
+									<thead>
+									<tr>
+										<?php foreach ($this->fields[$key]->repeats as $field):  ?>
+											<th class="manage-column column-columnname" scope="col"><?= $field->label ?? $field->name?></th>
+										<?php endforeach; ?>
+									</tr>
+									</thead>
+									<tfoot>
+									<tr>
+										<?php foreach ($this->fields[$key]->repeats as $field):  ?>
+											<th class="manage-column column-columnname" scope="col"><?= $field->label ?? $field->name?></th>
+										<?php endforeach; ?>
+									</tr>
+									</tfoot>
+
+									<tbody>
+									<?php foreach ($json as $row): ?>
+										<tr>
+											<?php foreach ($this->fields[$key]->repeats as $field):
+												?>
+												<td class="column-columnname"><?= $row[$field->name]?></td>
+											<?php endforeach; ?>
+										</tr>
+									<?php endforeach; ?>
+									</tbody>
+								</table>
+								<?php
+							}
 						}
 					}
 				}
@@ -272,12 +363,12 @@ Class Input {
 	public $required;
 	public $hide;
 	public $title;
+	public $repeats;
 
 	public static function make($type, $name, $label=null) {
 		$input = new Input();
 		$input->type = $type;
 		$input->name = $name;
-		$input->label = $label;
 		$input->label = $label;
 		return $input;
 	}
@@ -294,6 +385,16 @@ Class Input {
 
 	public function hide() {
 		$this->hide = true;
+		return $this;
+	}
+
+	public function repeats($fields) {
+		if($this->type !== 'array') {
+			return new WP_Error( 'broke', __( "Non array inputs can't be repeated.", "my_textdomain" ) );
+		}
+		foreach($fields as $field) {
+			$this->repeats[$field->name] = $field;
+		}
 		return $this;
 	}
 }
