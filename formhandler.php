@@ -121,7 +121,7 @@ Class Formendpoint {
             if(is_array($value)) {
 	            add_post_meta($post_id, $key, json_encode($value));
             } else {
-				add_post_meta($post_id, $key, esc_html($value));
+				add_post_meta($post_id, $key, $value);
             }
 		}
 
@@ -163,7 +163,31 @@ Class Formendpoint {
 						} else {
 							$allinputs .= '<h3>'.$this->fields[$key]->name.'</h3>';
 						}
-						$allinputs .= '<p>'.nl2br(esc_html($value)).'</p>';
+
+						if($this->fields[$key]->type !== 'array') {
+							$allinputs .= '<p>'.nl2br($value).'</p>';
+						} else {
+							$json = $value;
+							$allinputs .= '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;">';
+								$allinputs .= '<thead>';
+								$allinputs .= '<tr>';
+									foreach ($this->fields[$key]->repeats as $field):
+										$allinputs .= '<th class="manage-column column-columnname" scope="col" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
+									endforeach;
+								$allinputs .= '</tr>';
+								$allinputs .= '</thead>';
+
+								$allinputs .= '<tbody>';
+								foreach ($json as $row):
+									$allinputs .= '<tr>';
+										foreach ($this->fields[$key]->repeats as $field):
+											$allinputs .= '<td class="column-columnname">' . $row[$field->name]. '</td>';
+										endforeach;
+									$allinputs .= '</tr>';
+								endforeach;
+								$allinputs .= '</tbody>';
+							$allinputs .= '</table>';
+						}
 					}
 				}
 				foreach ($this->fields as $key => $value) {
@@ -197,12 +221,12 @@ Class Formendpoint {
 //						}
 						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
 					} else {
-						$data[$key][$subkey][$subsubbkey] = esc_html($data[$key][$subkey][$subsubbkey]);
+						$data[$key][$subkey][$subsubbkey] = htmlentities($data[$key][$subkey][$subsubbkey]);
 					}
 				}
 			}
 		} else {
-			$data[$key] = esc_html($value);
+			$data[$key] = htmlentities($value);
 		}
 	}
 
@@ -299,6 +323,7 @@ Class Formendpoint {
 										<?php endforeach; ?>
 									</tr>
 									</thead>
+									<?php if(sizeof($json) !== 1) : ?>
 									<tfoot>
 									<tr>
 										<?php foreach ($this->fields[$key]->repeats as $field):  ?>
@@ -306,6 +331,7 @@ Class Formendpoint {
 										<?php endforeach; ?>
 									</tr>
 									</tfoot>
+									<?php endif; ?>
 
 									<tbody>
 									<?php foreach ($json as $row): ?>
