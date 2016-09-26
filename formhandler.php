@@ -87,7 +87,7 @@ Class Formendpoint {
 			$this->data = $_POST;
 		}
 
-		if(!wp_verify_nonce($this->data['security'], 'security')) {
+		if(!wp_verify_nonce($this->data['security'], $this->posttype)) {
 			status_header(403);
 			wp_die();
 		}
@@ -246,7 +246,8 @@ Class Formendpoint {
 				$this->entryTitle .= $this->data[$field->name] . ' ';
 			}
 		} else {
-			if(!is_array($lookup)) {
+			if(isset($field->required) && !is_array($lookup)) {
+				echo 'Field "' . $field->name . '"is required';
 				status_header(400);
 				wp_die();
 			}
