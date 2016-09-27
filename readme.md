@@ -3,7 +3,7 @@
 ## Examples
 ### Simple Form
 ```php
-require_once 'path/to/formendpoint.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Onvardgmbh\Formendpoint\Formendpoint;
 use Onvardgmbh\Formendpoint\Honeypot;
@@ -28,7 +28,7 @@ Formendpoint::make('formentry', 'Form')
 
 ### Form Options with Carbon Fields
 ```php
-require_once 'path/to/formendpoint.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Onvardgmbh\Formendpoint\Formendpoint;
 use Onvardgmbh\Formendpoint\Honeypot;
