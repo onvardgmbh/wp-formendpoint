@@ -109,14 +109,17 @@ Class Formendpoint {
 		foreach ($this->data as $key => $value) {
 			$this->sanitizeField($this->data, $this->fields, $key, $value);
 		}
+		$flatten = [];
 		foreach ($this->fields as $field) {
 			$this->validateField($field, $this->data[$field->name]);
+			$flatten[] = $field->name;
 		}
 		$post_id = wp_insert_post( [
 			'post_title'    => $this->entryTitle,
 			'post_status'   => 'publish',
 			'post_type' => $this->posttype,
 		] );
+		$this->data = array_merge(array_flip($flatten), $this->data);
 		foreach ($this->data as $key => $value) {
             if(is_array($value)) {
 	            add_post_meta($post_id, $key, json_encode($value));
