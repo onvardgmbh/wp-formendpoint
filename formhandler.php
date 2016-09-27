@@ -112,7 +112,9 @@ Class Formendpoint {
 		$flatten = [];
 		foreach ($this->fields as $field) {
 			$this->validateField($field, $this->data[$field->name]);
-			$flatten[] = $field->name;
+			if(!empty($this->data[$field->name])) {
+				$flatten[] = $field->name;
+			}
 		}
 		$post_id = wp_insert_post( [
 			'post_title'    => $this->entryTitle,
@@ -208,14 +210,14 @@ Class Formendpoint {
 	}
 
 	private function sanitizeField(&$data, &$fields, $key, $value) {
-		if(!isset($fields[$key])) {
+		if(!isset($fields[$key]) || empty($data[$key])) {
 			unset($data[$key]);
 			return;
 		}
 		if($fields[$key]->type === 'array') {
 			foreach ($value as $subkey => $value2) {
 				foreach ($value2 as $subsubbkey => $value3) {
-					if(!isset($fields[$key]->repeats[$subsubbkey])) {
+					if(!isset($fields[$key]->repeats[$subsubbkey]) || empty($data[$key][$subkey][$subsubbkey])) {
 						unset($data[$key][$subkey][$subsubbkey]);
 						continue;
 					} elseif(is_array($value3)) {
