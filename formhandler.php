@@ -161,6 +161,7 @@ Class Formendpoint {
 					$body = $action->body;
 				}
 				$allinputs = '';
+				$template_content = [];
 				foreach ($this->data as $key => $value) {
 					if(isset($this->fields[$key]) && !isset($this->fields[$key]->hide)) {
 						if($this->fields[$key]->label) {
@@ -171,33 +172,37 @@ Class Formendpoint {
 
 						if($this->fields[$key]->type !== 'array') {
 							$allinputs .= '<p>'.nl2br($value).'</p>';
+							$template_content[$key] = nl2br($value);
 						} else {
 							$json = $value;
-							$allinputs .= '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;">';
-								$allinputs .= '<thead>';
-								$allinputs .= '<tr>';
-									foreach ($this->fields[$key]->repeats as $field):
-										$allinputs .= '<th class="manage-column column-columnname" scope="col" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
-									endforeach;
-								$allinputs .= '</tr>';
-								$allinputs .= '</thead>';
-
-								$allinputs .= '<tbody>';
-								foreach ($json as $row):
-									$allinputs .= '<tr>';
+							$tableinput = '';
+							$tableinput .= '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;">';
+								$tableinput .= '<thead>';
+									$tableinput .= '<tr>';
 										foreach ($this->fields[$key]->repeats as $field):
-											$allinputs .= '<td class="column-columnname">' . $row[$field->name]. '</td>';
+											$tableinput .= '<th class="manage-column column-columnname" scope="col" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
 										endforeach;
-									$allinputs .= '</tr>';
-								endforeach;
-								$allinputs .= '</tbody>';
-							$allinputs .= '</table>';
+									$tableinput .= '</tr>';
+								$tableinput .= '</thead>';
+
+								$tableinput .= '<tbody>';
+									foreach ($json as $row):
+										$tableinput .= '<tr>';
+											foreach ($this->fields[$key]->repeats as $field):
+												$tableinput .= '<td class="column-columnname">' . $row[$field->name]. '</td>';
+											endforeach;
+										$tableinput .= '</tr>';
+									endforeach;
+								$tableinput .= '</tbody>';
+							$tableinput .= '</table>';
+							$template_content[$key] = $tableinput;
+							$allinputs .= $tableinput;
 						}
 					}
 				}
 				foreach ($this->fields as $key => $value) {
-					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($this->data[$key] ?? '')), $body);
-					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br(esc_html($this->data[$key] ?? '')), $subject);
+					$body = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br($template_content[$key] ?? ''), $body);
+					$subject = preg_replace('/{{\s*' . $key . '\s*}}/', nl2br($template_content[$key] ?? ''), $subject);
 				}
 				$body = preg_replace('/{{\s*Alle Inputs\s*}}/', $allinputs, $body);
 				wp_mail( $recipient, $subject, $body, $headers);
@@ -255,6 +260,9 @@ Class Formendpoint {
 				echo 'Field "' . $field->name . '"is required';
 				status_header(400);
 				wp_die();
+			}
+			if(!is_array($lookup)) {
+				return;
 			}
 			foreach ($lookup as $userinput) {
 				foreach ($field->repeats as $subfield) {
