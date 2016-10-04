@@ -189,7 +189,7 @@ Class Formendpoint {
 									foreach ($json as $row):
 										$tableinput .= '<tr>';
 											foreach ($this->fields[$key]->repeats as $field):
-												$tableinput .= '<td class="column-columnname">' . $row[$field->name]. '</td>';
+												$tableinput .= '<td class="column-columnname">' . $row[$field->name] ?? '' . '</td>';
 											endforeach;
 										$tableinput .= '</tr>';
 									endforeach;
@@ -352,7 +352,7 @@ Class Formendpoint {
 										<tr>
 											<?php foreach ($this->fields[$key]->repeats as $field):
 												?>
-												<td class="column-columnname"><?= $row[$field->name]?></td>
+												<td class="column-columnname"><?= $row[$field->name] ?? ''; ?></td>
 											<?php endforeach; ?>
 										</tr>
 									<?php endforeach; ?>
