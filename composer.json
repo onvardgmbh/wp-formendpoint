@@ -9,5 +9,9 @@
             "email": "hasse@onvard.de"
         }
     ],
-    "require": {}
+    "autoload": {
+        "psr-4": {
+          "Onvardgmbh\\": "/"
+        }
+    }
 }
