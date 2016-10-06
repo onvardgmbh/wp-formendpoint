@@ -39,6 +39,12 @@
     var form, formMessage, formSuccess;
     var setup = function() {
         form = document.querySelector('form.contactform');
+
+		//Abort if no form found
+		if(!form){
+			return;
+		}
+
 		formMessage = document.querySelector('.form-message');
 		formSuccess = document.querySelector('.form-success');
         form.addEventListener("submit", function(event){
