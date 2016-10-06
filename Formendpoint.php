@@ -228,7 +228,7 @@ Class Formendpoint {
 		if ( $fields[ $key ]->type === 'array' ) {
 			foreach ( $value as $subkey => $value2 ) {
 				foreach ( $value2 as $subsubbkey => $value3 ) {
-					if ( ! isset( $fields[ $key ]->repeats[ $subsubbkey ] ) || empty( $data[ $key ][ $subkey ][ $subsubbkey ] ) ) {
+					if ( ! isset( $fields[ $key ]->repeats[ $subsubbkey ] ) || (empty( $data[ $key ][ $subkey ][ $subsubbkey ] ) && $data[ $key ][ $subkey ][ $subsubbkey ] !== 0 && $data[ $key ][ $subkey ][ $subsubbkey ] !== '0') ) {
 						unset( $data[ $key ][ $subkey ][ $subsubbkey ] );
 						continue;
 					} elseif ( is_array( $value3 ) ) {
