@@ -45,6 +45,7 @@
 		//Display warning and don't initialize forms if not every form has its own formMessage and formSuccess
 		if(form.length != formMessages.length && form.length != formSuccess.length) {
 			console.error("Not every form has an form message and form success! Please fix this to get the forms initialized.");
+			return;
 		}
 
 
