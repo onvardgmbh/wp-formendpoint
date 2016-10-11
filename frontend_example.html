@@ -36,36 +36,41 @@
 
 <script type="text/javascript">
 ;(function(){
-    var form, formMessage, formSuccess;
+    var form, formMessages, formSuccess;
     var setup = function() {
-        form = document.querySelector('form.contactform');
+        form = document.querySelectorAll('form.contactform');
+        formMessages = document.querySelectorAll('.form-message');
+		formSuccess = document.querySelectorAll('.form-success');
 
-		//Abort if no form found
-		if(!form){
-			return;
+		//Display warning and don't initialize forms if not every form has its own formMessage and formSuccess
+		if(form.length != formMessages.length && form.length != formSuccess.length) {
+			console.error("Not every form has an form message and form success! Please fix this to get the forms initialized.");
 		}
 
-		formMessage = document.querySelector('.form-message');
-		formSuccess = document.querySelector('.form-success');
-        form.addEventListener("submit", function(event){
-        	event.preventDefault();
-        	var request = new XMLHttpRequest();
-			request.open('POST', '/wp-admin/admin-ajax.php', true);
-			request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-			request.onload = function() {
-				if (this.status == 200) {
-					form.style.display = 'none';
-					formSuccess.style.display = 'block';
-					formSuccess.innerHTML = formSuccess.innerHTML + this.response;
-				} else {
-					formMessage.innerHTML = this.response;
-				}
-			};
-			request.onerror = function() {
-				formMessage.innerHTML = 'Error';
-			};
-			request.send(serialize(this) + '&action=formentry&security=' + formentry.security);
-        });
+
+		Array.prototype.forEach.call(form, function(el, i){
+			el.addEventListener("submit", function(event){
+				event.preventDefault();
+				var request = new XMLHttpRequest();
+				request.open('POST', '/wp-admin/admin-ajax.php', true);
+				request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+				request.onload = function() {
+					if (this.status == 200) {
+						el.style.display = 'none';
+						formSuccess[i].style.display = 'block';
+						formSuccess[i].innerHTML = formSuccess.innerHTML + this.response;
+					} else {
+						formMessages[i].innerHTML = this.response;
+					}
+				};
+				request.onerror = function() {
+					formMessages[i].innerHTML = 'Error';
+				};
+				request.send(serialize(this) + '&action=formentry&security=' + formentry.security);
+			});
+		});
+
+
     };
 
 	var serialize = function (form) {
