@@ -185,6 +185,9 @@ Class Formendpoint {
 							$tableinput .= '<thead>';
 							$tableinput .= '<tr>';
 							foreach ( $this->fields[ $key ]->repeats as $field ):
+								if(isset($field->hide)) {
+									continue;
+								}
 								$tableinput .= '<th class="manage-column column-columnname" scope="col" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
 							endforeach;
 							$tableinput .= '</tr>';
@@ -194,6 +197,9 @@ Class Formendpoint {
 							foreach ( $json as $row ):
 								$tableinput .= '<tr>';
 								foreach ( $this->fields[ $key ]->repeats as $field ):
+									if(isset($field->hide)) {
+										continue;
+									}
 									$tableinput .= '<td class="column-columnname">' . $row[ $field->name ] ?? '' . '</td>';
 								endforeach;
 								$tableinput .= '</tr>';
@@ -220,7 +226,7 @@ Class Formendpoint {
 	}
 
 	private function sanitizeField( &$data, &$fields, $key, $value ) {
-		if ( ! isset( $fields[ $key ] ) || empty( $data[ $key ] ) ) {
+		if(!isset($fields[$key]) || (!isset($data[$key]) || $data[$key] === '' || !count($data[$key]))) {
 			unset( $data[ $key ] );
 
 			return;
@@ -228,7 +234,10 @@ Class Formendpoint {
 		if ( $fields[ $key ]->type === 'array' ) {
 			foreach ( $value as $subkey => $value2 ) {
 				foreach ( $value2 as $subsubbkey => $value3 ) {
-					if ( ! isset( $fields[ $key ]->repeats[ $subsubbkey ] ) || (empty( $data[ $key ][ $subkey ][ $subsubbkey ] ) && $data[ $key ][ $subkey ][ $subsubbkey ] !== 0 && $data[ $key ][ $subkey ][ $subsubbkey ] !== '0') ) {
+					if(!isset($fields[$key]->repeats[$subsubbkey]) || (
+                                                      !isset($data[$key][$subkey][$subsubbkey]) 
+                                                      || $data[$key][$subkey][$subsubbkey] === '' 
+                                                      || !count($data[$key][$subkey][$subsubbkey])) ) {
 						unset( $data[ $key ][ $subkey ][ $subsubbkey ] );
 						continue;
 					} elseif ( is_array( $value3 ) ) {
@@ -257,7 +266,7 @@ Class Formendpoint {
 
 	private function validateField( $field, $lookup ) {
 		if ( $field->type !== 'array' ) {
-			if ( isset( $field->required ) && empty( $lookup ) ) {
+			if(isset($field->required) && (!isset($lookup) || $lookup === '' || !count($lookup))) {
 				echo 'Field "' . $field->name . '"is required';
 				status_header( 400 );
 				wp_die();
@@ -348,7 +357,11 @@ Class Formendpoint {
 								<table class="wp-list-table widefat fixed striped" cellspacing="0">
 									<thead>
 									<tr>
-										<?php foreach ( $this->fields[ $key ]->repeats as $field ): ?>
+										<?php foreach ( $this->fields[ $key ]->repeats as $field ):
+											if(isset($field->hide)) {
+												continue;
+											}
+											?>
 											<th class="manage-column column-columnname"
 											    scope="col"><?= $field->label ?? $field->name ?></th>
 										<?php endforeach; ?>
@@ -357,7 +370,11 @@ Class Formendpoint {
 									<?php if ( sizeof( $json ) !== 1 ) : ?>
 										<tfoot>
 										<tr>
-											<?php foreach ( $this->fields[ $key ]->repeats as $field ): ?>
+											<?php foreach ( $this->fields[ $key ]->repeats as $field ):
+												if(isset($field->hide)) {
+													continue;
+												}
+												?>
 												<th class="manage-column column-columnname"
 												    scope="col"><?= $field->label ?? $field->name ?></th>
 											<?php endforeach; ?>
@@ -369,6 +386,9 @@ Class Formendpoint {
 									<?php foreach ( $json as $row ): ?>
 										<tr>
 											<?php foreach ( $this->fields[ $key ]->repeats as $field ):
+												if(isset($field->hide)) {
+													continue;
+												}
 												?>
 												<td class="column-columnname"><?= $row[ $field->name ] ?? ''; ?></td>
 											<?php endforeach; ?>
