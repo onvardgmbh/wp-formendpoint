@@ -142,7 +142,7 @@ Class Formendpoint {
 		foreach ( $this->actions as $action ) {
 			if ( get_class( $action ) === 'Onvardgmbh\Formendpoint\Email' ) {
 				if ( gettype( $action->recipient ) === 'object' ) {
-					$recipient = ( $action->recipient )();
+					$recipient = ( $action->recipient )( $post_id, $this->fields );
 					if ( ! $recipient ) {
 						continue;
 					}
@@ -150,7 +150,7 @@ Class Formendpoint {
 					$recipient = $action->recipient;
 				}
 				if ( gettype( $action->subject ) === 'object' ) {
-					$subject = ( $action->subject )();
+					$subject = ( $action->subject )( $post_id, $this->fields );
 					if ( ! $subject ) {
 						continue;
 					}
