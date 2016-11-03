@@ -117,7 +117,7 @@ Class Formendpoint {
 		}
 		$flatten = [];
 		foreach ( $this->fields as $field ) {
-			$this->validateField( $field, $this->data[ $field->name ] );
+			$this->validateField( $field, $this->data[ $field->name ] ?? null );
 			if ( ! empty( $this->data[ $field->name ] ) ) {
 				$flatten[] = $field->name;
 			}
