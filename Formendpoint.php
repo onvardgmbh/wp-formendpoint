@@ -188,7 +188,7 @@ Class Formendpoint {
 								if(isset($field->hide)) {
 									continue;
 								}
-								$tableinput .= '<th class="manage-column column-columnname" scope="col" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
+								$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
 							endforeach;
 							$tableinput .= '</tr>';
 							$tableinput .= '</thead>';
@@ -200,7 +200,7 @@ Class Formendpoint {
 									if(isset($field->hide)) {
 										continue;
 									}
-									$tableinput .= '<td class="column-columnname">' . $row[ $field->name ] ?? '' . '</td>';
+									$tableinput .= '<td class="column-columnname" valign="top">' . $row[ $field->name ] ?? '' . '</td>';
 								endforeach;
 								$tableinput .= '</tr>';
 							endforeach;
