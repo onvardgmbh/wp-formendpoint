@@ -112,6 +112,8 @@ Class Formendpoint {
 			unset( $this->data[ $honeypot->name ] );
 		}
 
+		$this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
+
 		foreach ( $this->data as $key => $value ) {
 			$this->sanitizeField( $this->data, $this->fields, $key, $value );
 		}
