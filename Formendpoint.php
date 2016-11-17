@@ -103,8 +103,6 @@ Class Formendpoint {
 			unset( $this->data[ $honeypot->name ] );
 		}
 
-		$this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
-
 		foreach ( $this->data as $key => $value ) {
 			$this->sanitizeField( $this->data, $this->fields, $key, $value );
 		}
@@ -122,8 +120,16 @@ Class Formendpoint {
 		] );
 		$this->data = array_merge( array_flip( $flatten ), $this->data );
 		foreach ( $this->data as $key => $value ) {
-			add_post_meta( $post_id, $key, is_array( $value ) ? json_encode( $value ) : $value );
+			if ( is_array( $value ) ) {
+				add_post_meta( $post_id, $key, json_encode( $value ) );
+			} elseif ( is_bool( $value ) ) {
+				add_post_meta( $post_id, $key,  $value ? 'true' : 'false'  );
+			} else {
+				add_post_meta( $post_id, $key, $value );
+			}
 		}
+
+		$this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
 
 		foreach ( $this->actions as $action ) {
 			if ( get_class( $action ) === 'Onvardgmbh\Formendpoint\Email' ) {
