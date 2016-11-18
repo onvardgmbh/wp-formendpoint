@@ -22,7 +22,6 @@ Class Formendpoint {
 	function __construct( $posttype, $heading, $style ) {
 		if ( strlen( $posttype ) > 20 || preg_match( '/\s/', $posttype ) || preg_match( '/[A-Z]/', $posttype ) ) {
 			echo 'ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.';
-
 			return;
 		}
 
@@ -41,12 +40,11 @@ Class Formendpoint {
 			wp_localize_script( $this->style, $this->posttype, array(
 				// URL to wp-admin/admin-ajax.php to process the request
 				'ajaxurl'  => admin_url( 'admin-ajax.php' ),
-				// generate a nonce with a unique ID "myajax-post-comment-nonce"
+				// Generate a nonce with a unique ID "myajax-post-comment-nonce"
 				// so that you can check it later when an AJAX request is sent
-				'security' => wp_create_nonce( $this->posttype )
-			) );
+				'security' => wp_create_nonce( $this->posttype ) ) );
 		} );
-		add_action( 'wp_ajax_' . $this->posttype, array( $this, 'handleformsubmit' ) );
+		add_action( 'wp_ajax_' .        $this->posttype, array( $this, 'handleformsubmit' ) );
 		add_action( 'wp_ajax_nopriv_' . $this->posttype, array( $this, 'handleformsubmit' ) );
 	}
 
@@ -54,7 +52,6 @@ Class Formendpoint {
 		foreach ( $actions as $action ) {
 			$this->actions[] = $action;
 		}
-
 		return $this;
 	}
 
@@ -62,7 +59,6 @@ Class Formendpoint {
 		foreach ( $honeypots as $honeypot ) {
 			$this->honeypots[] = $honeypot;
 		}
-
 		return $this;
 	}
 
@@ -70,28 +66,23 @@ Class Formendpoint {
 		foreach ( $fields as $field ) {
 			$this->fields[ $field->name ] = $field;
 		}
-
 		return $this;
 	}
 
 	public function show_ui( $show_ui ) {
 		$this->show_ui = $show_ui;
-
 		return $this;
 	}
 
 	public function validate( $function ) {
 		$this->validate_function = $function;
-
 		return $this;
 	}
 
 	public function handleformsubmit() {
-		if ( $_SERVER["CONTENT_TYPE"] === 'application/json' ) {
-			$this->data = json_decode( file_get_contents( 'php://input' ), true );
-		} else {
-			$this->data = $_POST;
-		}
+		$this->data = $_SERVER["CONTENT_TYPE"] === 'application/json'
+			? json_decode( file_get_contents( 'php://input' ), true )
+			: $_POST;
 
 		if ( ! wp_verify_nonce( $this->data['security'], $this->posttype ) ) {
 			status_header( 403 );
@@ -112,8 +103,6 @@ Class Formendpoint {
 			unset( $this->data[ $honeypot->name ] );
 		}
 
-		$this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
-
 		foreach ( $this->data as $key => $value ) {
 			$this->sanitizeField( $this->data, $this->fields, $key, $value );
 		}
@@ -133,92 +122,34 @@ Class Formendpoint {
 		foreach ( $this->data as $key => $value ) {
 			if ( is_array( $value ) ) {
 				add_post_meta( $post_id, $key, json_encode( $value ) );
+			} elseif ( is_bool( $value ) ) {
+				add_post_meta( $post_id, $key,  $value ? 'true' : 'false'  );
 			} else {
 				add_post_meta( $post_id, $key, $value );
 			}
 		}
 
-		$headers = [];
-		//$headers[] = 'From: My Name <myname@example.com>' . "\r\n";
-		$headers[] = 'Content-Type: text/html; charset=UTF-8';
+		$this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
+
 		foreach ( $this->actions as $action ) {
 			if ( get_class( $action ) === 'Onvardgmbh\Formendpoint\Email' ) {
-				if ( gettype( $action->recipient ) === 'object' ) {
-					$recipient = ( $action->recipient )( $post_id, $this->fields );
-					if ( ! $recipient ) {
-						continue;
-					}
-				} else {
-					$recipient = $action->recipient;
-				}
-				if ( gettype( $action->subject ) === 'object' ) {
-					$subject = ( $action->subject )( $post_id, $this->fields );
-					if ( ! $subject ) {
-						continue;
-					}
-				} else {
-					$subject = $action->subject;
-				}
-				if ( gettype( $action->body ) === 'object' ) {
-					$body = ( $action->body )( $post_id, $this->fields );
-					if ( ! $body ) {
-						continue;
-					}
-				} else {
-					$body = $action->body;
-				}
-				$allinputs        = '';
-				$template_content = [];
-				foreach ( $this->data as $key => $value ) {
-					if ( isset( $this->fields[ $key ] ) && ! isset( $this->fields[ $key ]->hide ) ) {
-						if ( $this->fields[ $key ]->label ) {
-							$allinputs .= '<h3>' . $this->fields[ $key ]->label . '</h3>';
-						} else {
-							$allinputs .= '<h3>' . $this->fields[ $key ]->name . '</h3>';
-						}
+				$recipient = gettype( $action->recipient ) === 'object'
+					? ( $action->recipient )( $post_id, $this->fields )
+					: $action->recipient;
 
-						if ( $this->fields[ $key ]->type !== 'array' ) {
-							$allinputs .= '<p>' . nl2br( $value ) . '</p>';
-							$template_content[ $key ] = nl2br( $value );
-						} else {
-							$json       = $value;
-							$tableinput = '';
-							$tableinput .= '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;">';
-							$tableinput .= '<thead>';
-							$tableinput .= '<tr>';
-							foreach ( $this->fields[ $key ]->repeats as $field ):
-								if(isset($field->hide)) {
-									continue;
-								}
-								$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">' . $field->label ?? $field->name . '</th>';
-							endforeach;
-							$tableinput .= '</tr>';
-							$tableinput .= '</thead>';
+				$subject = gettype( $action->subject ) === 'object'
+					? ( $action->subject )( $post_id, $this->fields )
+					: $action->subject;
 
-							$tableinput .= '<tbody>';
-							foreach ( $json as $row ):
-								$tableinput .= '<tr>';
-								foreach ( $this->fields[ $key ]->repeats as $field ):
-									if(isset($field->hide)) {
-										continue;
-									}
-									$tableinput .= '<td class="column-columnname" valign="top">' . $row[ $field->name ] ?? '' . '</td>';
-								endforeach;
-								$tableinput .= '</tr>';
-							endforeach;
-							$tableinput .= '</tbody>';
-							$tableinput .= '</table>';
-							$template_content[ $key ] = $tableinput;
-							$allinputs .= $tableinput;
-						}
-					}
+				$body = gettype( $action->body ) === 'object'
+					? ( $action->body )( $post_id, $this->fields )
+					: $action->body;
+
+				if ( $recipient && $subject && $body ) {
+					wp_mail( $recipient, $this->template_replace( $subject, $this->data ),
+						$this->template_replace( $body, $this->data, 'Alle inputs' ),
+						array( 'Content-Type: text/html; charset=UTF-8' ) );
 				}
-				foreach ( $this->fields as $key => $value ) {
-					$body    = preg_replace( '/{{\s*' . $key . '\s*}}/', nl2br( $template_content[ $key ] ?? '' ), $body );
-					$subject = preg_replace( '/{{\s*' . $key . '\s*}}/', nl2br( $template_content[ $key ] ?? '' ), $subject );
-				}
-				$body = preg_replace( '/{{\s*Alle Inputs\s*}}/', $allinputs, $body );
-				wp_mail( $recipient, $subject, $body, $headers );
 			} else if ( get_class( $action ) === 'Onvardgmbh\Formendpoint\Callback' ) {
 				( $action->function )( $post_id, $this->fields );
 			}
@@ -228,69 +159,52 @@ Class Formendpoint {
 	}
 
 	private function sanitizeField( &$data, &$fields, $key, $value ) {
-		if(!isset($fields[$key]) || (!isset($data[$key]) || $data[$key] === '' || !count($data[$key]))) {
+		if ( ! isset( $fields[ $key ] ) || ( ! isset( $data[ $key ] ) || $data[ $key ] === '' || ! count( $data[ $key ] ) ) ) {
 			unset( $data[ $key ] );
-
-			return;
-		}
-		if ( $fields[ $key ]->type === 'array' ) {
+		} elseif ( $fields[ $key ]->type === 'array' ) {
 			foreach ( $value as $subkey => $value2 ) {
 				foreach ( $value2 as $subsubbkey => $value3 ) {
-					if(!isset($fields[$key]->repeats[$subsubbkey]) || (
-                                                      !isset($data[$key][$subkey][$subsubbkey]) 
-                                                      || $data[$key][$subkey][$subsubbkey] === '' 
-                                                      || !count($data[$key][$subkey][$subsubbkey])) ) {
+					if ( ! isset( $fields[ $key ]->repeats[ $subsubbkey ] )
+						|| ! isset( $data[ $key ][ $subkey ][ $subsubbkey ] )
+						|| ! count( $data[ $key ][ $subkey ][ $subsubbkey ] )
+						||          $data[ $key ][ $subkey ][ $subsubbkey ] === ''
+					) {
 						unset( $data[ $key ][ $subkey ][ $subsubbkey ] );
 						continue;
 					} elseif ( is_array( $value3 ) ) {
-//						foreach ($value3 as $data_key => $data_value) {
-//							$this->sanitizeField($data[$key][$subkey][$subsubbkey], $value3, $data_key, $data_value);
-//						}
 						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
-					} else {
-						$data[ $key ][ $subkey ][ $subsubbkey ] = $this->escapeCharacters( $data[ $key ][ $subkey ][ $subsubbkey ] );
 					}
 				}
 			}
-		} else {
-			$data[ $key ] = $this->escapeCharacters( $value );
 		}
 	}
 
-	private function escapeCharacters( $string ) {
-		return preg_replace_callback( '/[\x{80}-\x{10FFFF}]/u', function ( $m ) {
-			$char = current( $m );
-			$utf  = iconv( 'UTF-8', 'UCS-4', $char );
-
-			return sprintf( "&#x%s;", ltrim( strtoupper( bin2hex( $utf ) ), "0" ) );
-		}, htmlentities( $string, ENT_QUOTES | ENT_IGNORE, "UTF-8" ) );
-	}
-
-	private function validateField( $field, $lookup ) {
+	private function validateField( $field, $value ) {
 		if ( $field->type !== 'array' ) {
-			if(isset($field->required) && (!isset($lookup) || $lookup === '' || !count($lookup))) {
+			if ( isset( $field->required ) && ( ! isset( $value ) || $value === '' || ! count( $value ) ) ) {
 				echo 'Field "' . $field->name . '"is required';
 				status_header( 400 );
 				wp_die();
 			}
-			if ( $field->type === 'email' && ( isset( $field->required ) || ! empty( $lookup ) ) && ! is_email( $lookup ) ) {
-				echo $lookup . ' is not a valid email address.';
+			if ( $field->type === 'email' && ( isset( $field->required ) || ! empty( $value ) ) && ! is_email( $value ) ) {
+				echo $value . ' is not a valid email address.';
 				status_header( 400 );
 				wp_die();
 			}
 			if ( isset( $field->title ) ) {
-				$this->entryTitle .= $this->data[ $field->name ] . ' ';
+				$this->entryTitle .= ( $this->data[ $field->name ] ?? '' ) . ' ';
 			}
 		} else {
-			if ( isset( $field->required ) && ! is_array( $lookup ) ) {
+			if ( isset( $field->required ) && ! is_array( $value ) ) {
 				echo 'Field "' . $field->name . '"is required';
 				status_header( 400 );
 				wp_die();
 			}
-			if ( ! is_array( $lookup ) ) {
+			if ( ! is_array( $value ) ) {
 				return;
 			}
-			foreach ( $lookup as $userinput ) {
+
+			foreach ( $value as $userinput ) {
 				foreach ( $field->repeats as $subfield ) {
 					if ( $subfield->type !== 'array' ) {
 						$this->validateField( $subfield, $userinput[ $subfield->name ] );
@@ -298,7 +212,6 @@ Class Formendpoint {
 							$this->entryTitle .= $userinput[ $subfield->name ] . ' ';
 						}
 					} else {
-//						$this->validateField($subfield, $userinput[$subfield->name]);
 						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
 					}
 				}
@@ -307,11 +220,10 @@ Class Formendpoint {
 	}
 
 	public function dates_post_type_init() {
-		register_post_type( $this->posttype, [
+		register_post_type( $this->posttype, array(
 			'labels'       => array(
 				'name'               => _x( 'Eintrag', 'post type general name' ),
 				'singular_name'      => _x( 'Eintrag', 'post type singular name' ),
-				//'add_new'            => _x( 'Add New', 'book' ),
 				'add_new_item'       => __( 'Neuer Eintrag' ),
 				'edit_item'          => __( 'Eintrag bearbeiten' ),
 				'new_item'           => __( 'Neuer Eintrag' ),
@@ -331,8 +243,8 @@ Class Formendpoint {
 			'capabilities' => array(
 				'create_posts' => 'do_not_allow'
 			),
-			'map_meta_cap' => true, // Set to `false`, if users are not allowed to edit/delete existing posts
-		] );
+			'map_meta_cap' => true
+		) );
 	}
 
 	public function adding_custom_meta_boxes( $post ) {
@@ -342,71 +254,72 @@ Class Formendpoint {
 			function () {
 				global $post;
 				echo $post->post_content;
-				$post_meta = get_post_custom();
-				foreach ( $post_meta as $key => $value ) {
-					if ( isset( $this->fields[ $key ] ) && ! isset( $this->fields[ $key ]->hide ) ) {
-						if ( $this->fields[ $key ]->label ) {
-							echo '<h3>' . $this->fields[ $key ]->label . '</h3>';
-						} else {
-							echo '<h3>' . $this->fields[ $key ]->name . '</h3>';
-						}
-						foreach ( $value as $content ) {
-							if ( $this->fields[ $key ]->type !== 'array' ) {
-								echo '<p>' . nl2br( $content ) . '</p>';
-							} else {
-								$json = json_decode( $content, true );
-								?>
-								<table class="wp-list-table widefat fixed striped" cellspacing="0">
-									<thead>
-									<tr>
-										<?php foreach ( $this->fields[ $key ]->repeats as $field ):
-											if(isset($field->hide)) {
-												continue;
-											}
-											?>
-											<th class="manage-column column-columnname"
-											    scope="col"><?= $field->label ?? $field->name ?></th>
-										<?php endforeach; ?>
-									</tr>
-									</thead>
-									<?php if ( sizeof( $json ) !== 1 ) : ?>
-										<tfoot>
-										<tr>
-											<?php foreach ( $this->fields[ $key ]->repeats as $field ):
-												if(isset($field->hide)) {
-													continue;
-												}
-												?>
-												<th class="manage-column column-columnname"
-												    scope="col"><?= $field->label ?? $field->name ?></th>
-											<?php endforeach; ?>
-										</tr>
-										</tfoot>
-									<?php endif; ?>
-
-									<tbody>
-									<?php foreach ( $json as $row ): ?>
-										<tr>
-											<?php foreach ( $this->fields[ $key ]->repeats as $field ):
-												if(isset($field->hide)) {
-													continue;
-												}
-												?>
-												<td class="column-columnname"><?= $row[ $field->name ] ?? ''; ?></td>
-											<?php endforeach; ?>
-										</tr>
-									<?php endforeach; ?>
-									</tbody>
-								</table>
-								<?php
-							}
-						}
-					}
-				}
+				echo $this->template_replace( '{{all}}', array_map( function( $arr ) {
+					return $arr[0];
+				}, get_post_custom() ), 'all' );
 			},
 			$this->posttype,
-			'normal',
-			'default'
+			'normal'
 		);
+	}
+
+	/**
+	 * Takes a template string and replaces variables in double braces
+	 * @param $template_string {string} - The string to process
+	 * @param $data {array} - An instance of Formendpoint->data, or similar, like data from `get_post_custom()`
+	 * @param $markup_pattern {string} - If this pattern occurs within double braces in the $template_string,
+	 *        it is replaced by a HTML representation of all the data
+	 * @return {string} - The $template_string, with all valid double brace replacement points replaced
+	 */
+	private function template_replace( $template_string, $data, $markup_template = null ) {
+		$markup = '';
+		$template_content = [];
+
+		foreach ( $data as $key => $value ) {
+			$field = $this->fields[ $key ] ?? null;
+			if ( empty( $field ) || isset( $field->hide ) ) {
+				continue;
+			}
+
+			$markup .= '<h3>' . esc_html( $field->label ?: $field->name ) . '</h3>';
+
+			if ( $field->type !== 'array' ) {
+				$markup .= '<p>' . nl2br( esc_html( $value ) ) . '</p>';
+				$template_content[ $key ] = nl2br( esc_html( $value ) );
+			} else {
+				$tableinput = '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;"><thead><tr>';
+				foreach ( $field->repeats as $repeated_field ) {
+					if ( isset( $repeated_field->hide ) ) {
+						continue;
+					}
+					$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">'
+						. esc_html( $field->label ?? $field->name ) . '</th>';
+				}
+				$tableinput .= '</tr></thead><tbody>';
+				foreach ( $value as $row ) {
+					$tableinput .= '<tr>';
+					foreach ( $this->fields[ $key ]->repeats as $field ) {
+						if ( isset( $field->hide ) ) {
+							continue;
+						}
+						$tableinput .= '<td class="column-columnname" valign="top">' . esc_html( $row[ $field->name ] ?? '' ) . '</td>';
+					}
+					$tableinput .= '</tr>';
+				}
+				$tableinput .= '</tbody></table>';
+				$template_content[ $key ] = $tableinput;
+				$markup .= $tableinput;
+			}
+		}
+
+		$replaced = preg_replace_callback( '/{{\s*(' . implode( '|', array_keys( $this->fields ) ) . ')\s*}}/i', function( $matches ) use ( $template_content ) {
+			return nl2br( $template_content[ $matches[1] ] ?? '' );
+		}, $template_string );
+
+		if ( ! empty( $markup_template ) ) {
+			$replaced = preg_replace( '/{{\s*' . $markup_template . '\s*}}/i', $markup, $replaced );
+		}
+
+		return $replaced;
 	}
 }
