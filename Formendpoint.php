@@ -121,7 +121,7 @@ Class Formendpoint {
 		$this->data = array_merge( array_flip( $flatten ), $this->data );
 		foreach ( $this->data as $key => $value ) {
 			if ( is_array( $value ) ) {
-				add_post_meta( $post_id, $key, json_encode( $value ) );
+				add_post_meta( $post_id, $key, wp_slash( json_encode( $value ) ) );
 			} elseif ( is_bool( $value ) ) {
 				add_post_meta( $post_id, $key,  $value ? 'true' : 'false'  );
 			} else {
@@ -295,8 +295,9 @@ Class Formendpoint {
 					$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">'
 						. esc_html( $field->label ?? $field->name ) . '</th>';
 				}
+
 				$tableinput .= '</tr></thead><tbody>';
-				foreach ( $value as $row ) {
+				foreach ( json_decode( $value, true ) as $row ) {
 					$tableinput .= '<tr>';
 					foreach ( $this->fields[ $key ]->repeats as $field ) {
 						if ( isset( $field->hide ) ) {
