@@ -253,10 +253,19 @@ Class Formendpoint {
 			__( 'Eintrag' ),
 			function () {
 				global $post;
+				$data = [];
+				foreach ( get_post_custom() as $key => $value ) {
+					if ( isset( $this->fields[ $key ] ) ) {
+						if ( $this->fields[ $key ]->type === 'array' ) {
+							$data[ $key ] = json_decode( $value[0], true );
+						} else {
+							$data[ $key ] = $value[0];
+						}
+					}
+				}
+
 				echo $post->post_content;
-				echo $this->template_replace( '{{all}}', array_map( function( $arr ) {
-					return $arr[0];
-				}, get_post_custom() ), 'all' );
+				echo $this->template_replace( '{{all}}', $data, 'all' );
 			},
 			$this->posttype,
 			'normal'
@@ -267,7 +276,7 @@ Class Formendpoint {
 	 * Takes a template string and replaces variables in double braces
 	 * @param $template_string {string} - The string to process
 	 * @param $data {array} - An instance of Formendpoint->data, or similar, like data from `get_post_custom()`
-	 * @param $markup_pattern {string} - If this pattern occurs within double braces in the $template_string,
+	 * @param $markup_template {string} - If this pattern occurs within double braces in the $template_string,
 	 *        it is replaced by a HTML representation of all the data
 	 * @return {string} - The $template_string, with all valid double brace replacement points replaced
 	 */
@@ -289,21 +298,19 @@ Class Formendpoint {
 			} else {
 				$tableinput = '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;"><thead><tr>';
 				foreach ( $field->repeats as $repeated_field ) {
-					if ( isset( $repeated_field->hide ) ) {
-						continue;
+					if ( ! $repeated_field->hide ) {
+						$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">'
+							. esc_html( $repeated_field->label ?? $repeated_field->name ) . '</th>';
 					}
-					$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">'
-						. esc_html( $field->label ?? $field->name ) . '</th>';
 				}
 
 				$tableinput .= '</tr></thead><tbody>';
-				foreach ( json_decode( $value, true ) as $row ) {
+				foreach ( $value as $row ) {
 					$tableinput .= '<tr>';
-					foreach ( $this->fields[ $key ]->repeats as $field ) {
-						if ( isset( $field->hide ) ) {
-							continue;
+					foreach ( $this->fields[ $key ]->repeats as $repeated_field ) {
+						if ( ! $repeated_field->hide ) {
+							$tableinput .= '<td class="column-columnname" valign="top">' . esc_html( $row[ $repeated_field->name ] ?? '' ) . '</td>';
 						}
-						$tableinput .= '<td class="column-columnname" valign="top">' . esc_html( $row[ $field->name ] ?? '' ) . '</td>';
 					}
 					$tableinput .= '</tr>';
 				}
@@ -314,7 +321,7 @@ Class Formendpoint {
 		}
 
 		$replaced = preg_replace_callback( '/{{\s*(' . implode( '|', array_keys( $this->fields ) ) . ')\s*}}/i', function( $matches ) use ( $template_content ) {
-			return nl2br( $template_content[ $matches[1] ] ?? '' );
+			return $template_content[ $matches[1] ] ?? '';
 		}, $template_string );
 
 		if ( ! empty( $markup_template ) ) {
