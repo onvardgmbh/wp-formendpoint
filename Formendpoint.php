@@ -286,7 +286,7 @@ Class Formendpoint {
 
 		foreach ( $data as $key => $value ) {
 			$field = $this->fields[ $key ] ?? null;
-			if ( empty( $field ) || isset( $field->hide ) ) {
+			if ( empty( $field ) || ! empty( $field->hide ) ) {
 				continue;
 			}
 
@@ -298,7 +298,7 @@ Class Formendpoint {
 			} else {
 				$tableinput = '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;"><thead><tr>';
 				foreach ( $field->repeats as $repeated_field ) {
-					if ( ! $repeated_field->hide ) {
+					if ( empty( $repeated_field->hide ) ) {
 						$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">'
 							. esc_html( $repeated_field->label ?? $repeated_field->name ) . '</th>';
 					}
@@ -308,7 +308,7 @@ Class Formendpoint {
 				foreach ( $value as $row ) {
 					$tableinput .= '<tr>';
 					foreach ( $this->fields[ $key ]->repeats as $repeated_field ) {
-						if ( ! $repeated_field->hide ) {
+						if ( empty( $repeated_field->hide ) ) {
 							$tableinput .= '<td class="column-columnname" valign="top">' . esc_html( $row[ $repeated_field->name ] ?? '' ) . '</td>';
 						}
 					}
