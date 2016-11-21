@@ -125,7 +125,7 @@ Class Formendpoint {
 			} elseif ( is_bool( $value ) ) {
 				add_post_meta( $post_id, $key,  $value ? 'true' : 'false'  );
 			} else {
-				add_post_meta( $post_id, $key, $value );
+				add_post_meta( $post_id, $key, wp_slash( $value ) );
 			}
 		}
 
