@@ -121,11 +121,11 @@ Class Formendpoint {
 		$this->data = array_merge( array_flip( $flatten ), $this->data );
 		foreach ( $this->data as $key => $value ) {
 			if ( is_array( $value ) ) {
-				add_post_meta( $post_id, $key, wp_slash( json_encode( $value ) ) );
+				add_post_meta( $post_id, $key, addslashes( json_encode( $value ) ) );
 			} elseif ( is_bool( $value ) ) {
 				add_post_meta( $post_id, $key,  $value ? 'true' : 'false'  );
 			} else {
-				add_post_meta( $post_id, $key, wp_slash( $value ) );
+				add_post_meta( $post_id, $key, addslashes( $value ) );
 			}
 		}
 
@@ -325,7 +325,7 @@ Class Formendpoint {
 		}, $template_string );
 
 		if ( ! empty( $markup_template ) ) {
-			$replaced = preg_replace( '/{{\s*' . $markup_template . '\s*}}/i', wp_slash( $markup ), $replaced );
+			$replaced = preg_replace( '/{{\s*' . $markup_template . '\s*}}/i', addslashes( $markup ), $replaced );
 		}
 
 		return $replaced;
