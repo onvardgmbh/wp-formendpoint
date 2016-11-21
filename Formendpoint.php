@@ -325,7 +325,7 @@ Class Formendpoint {
 		}, $template_string );
 
 		if ( ! empty( $markup_template ) ) {
-			$replaced = preg_replace( '/{{\s*' . $markup_template . '\s*}}/i', $markup, $replaced );
+			$replaced = preg_replace( '/{{\s*' . $markup_template . '\s*}}/i', wp_slash( $markup ), $replaced );
 		}
 
 		return $replaced;
