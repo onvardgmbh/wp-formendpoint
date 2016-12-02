@@ -59,7 +59,7 @@
 					if (this.status == 200) {
 						el.style.display = 'none';
 						formSuccess[i].style.display = 'block';
-						formSuccess[i].innerHTML = formSuccess.innerHTML + this.response;
+						formSuccess[i].innerHTML = formSuccess[i].innerHTML + this.response;
 					} else {
 						formMessages[i].innerHTML = this.response;
 					}
