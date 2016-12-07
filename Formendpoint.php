@@ -165,9 +165,9 @@ Class Formendpoint {
 			foreach ( $value as $subkey => $value2 ) {
 				foreach ( $value2 as $subsubbkey => $value3 ) {
 					if ( ! isset( $fields[ $key ]->repeats[ $subsubbkey ] )
-						|| ! isset( $data[ $key ][ $subkey ][ $subsubbkey ] )
-						|| ! count( $data[ $key ][ $subkey ][ $subsubbkey ] )
-						||          $data[ $key ][ $subkey ][ $subsubbkey ] === ''
+						 || ! isset( $data[ $key ][ $subkey ][ $subsubbkey ] )
+						 || ! count( $data[ $key ][ $subkey ][ $subsubbkey ] )
+						 ||          $data[ $key ][ $subkey ][ $subsubbkey ] === ''
 					) {
 						unset( $data[ $key ][ $subkey ][ $subsubbkey ] );
 						continue;
@@ -289,18 +289,21 @@ Class Formendpoint {
 			if ( empty( $field ) || ! empty( $field->hide ) ) {
 				continue;
 			}
-
-			$markup .= '<h3>' . esc_html( $field->label ?: $field->name ) . '</h3>';
+			$markup .= '<p>';
+			$markup .= '<b>' . esc_html( $field->label ?: $field->name ) . ': </b>';
 
 			if ( $field->type !== 'array' ) {
-				$markup .= '<p>' . nl2br( esc_html( $value ) ) . '</p>';
+				$markup .= $field->type === 'textarea' ? '<br>' : '';
+				$markup .= nl2br( esc_html( $value ) );
 				$template_content[ $key ] = nl2br( esc_html( $value ) );
+				$markup .= '</p>';
 			} else {
+				$markup .= '</p>';
 				$tableinput = '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;"><thead><tr>';
 				foreach ( $field->repeats as $repeated_field ) {
 					if ( empty( $repeated_field->hide ) ) {
 						$tableinput .= '<th class="manage-column column-columnname" scope="col" valign="top" style="text-align: left;">'
-							. esc_html( $repeated_field->label ?? $repeated_field->name ) . '</th>';
+									   . esc_html( $repeated_field->label ?? $repeated_field->name ) . '</th>';
 					}
 				}
 
