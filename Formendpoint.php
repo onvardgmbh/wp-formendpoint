@@ -85,20 +85,18 @@ Class Formendpoint {
 			: $_POST;
 
 		if ( ! wp_verify_nonce( $this->data['security'], $this->posttype ) ) {
-			status_header( 403 );
-			wp_die();
+    			wp_die('', '', ["response" => 403]);
 		}
 
 		unset( $this->data['security'] );
 		unset( $this->data['action'] );
 		if ( isset( $this->validate_function ) && ! ( $this->validate_function )( $this->fields ) ) {
-			status_header( 403 );
-			wp_die();
+            		wp_die('', '', ["response" => 403]);
 		}
 
 		foreach ( $this->honeypots as $honeypot ) {
 			if ( ! isset( $this->data[ $honeypot->name ] ) || $this->data[ $honeypot->name ] !== $honeypot->equals ) {
-				wp_die( $honeypot->name );
+				wp_die($honeypot->name, '', ["response" => 403]);
 			}
 			unset( $this->data[ $honeypot->name ] );
 		}
@@ -182,23 +180,17 @@ Class Formendpoint {
 	private function validateField( $field, $value ) {
 		if ( $field->type !== 'array' ) {
 			if ( isset( $field->required ) && ( ! isset( $value ) || $value === '' || ! count( $value ) ) ) {
-				echo 'Field "' . $field->name . '"is required';
-				status_header( 400 );
-				wp_die();
+                		wp_die('Field "' . $field->name . '"is required', '', ["response" => 400]);
 			}
 			if ( $field->type === 'email' && ( isset( $field->required ) || ! empty( $value ) ) && ! is_email( $value ) ) {
-				echo $value . ' is not a valid email address.';
-				status_header( 400 );
-				wp_die();
+                		wp_die($value . ' is not a valid email address.', '', ["response" => 400]);
 			}
 			if ( isset( $field->title ) ) {
 				$this->entryTitle .= ( $this->data[ $field->name ] ?? '' ) . ' ';
 			}
 		} else {
 			if ( isset( $field->required ) && ! is_array( $value ) ) {
-				echo 'Field "' . $field->name . '"is required';
-				status_header( 400 );
-				wp_die();
+                		wp_die('Field "' . $field->name . '"is required', '', ["response" => 400]);
 			}
 			if ( ! is_array( $value ) ) {
 				return;
