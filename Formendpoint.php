@@ -132,15 +132,15 @@ Class Formendpoint {
 		foreach ( $this->actions as $action ) {
 			if ( get_class( $action ) === 'Onvardgmbh\Formendpoint\Email' ) {
 				$recipient = gettype( $action->recipient ) === 'object'
-					? ( $action->recipient )( $post_id, $this->fields )
+					? ( $action->recipient )( $post_id, $this->fields, $this->data )
 					: $action->recipient;
 
 				$subject = gettype( $action->subject ) === 'object'
-					? ( $action->subject )( $post_id, $this->fields )
+					? ( $action->subject )( $post_id, $this->fields, $this->data )
 					: $action->subject;
 
 				$body = gettype( $action->body ) === 'object'
-					? ( $action->body )( $post_id, $this->fields )
+					? ( $action->body )( $post_id, $this->fields, $this->data )
 					: $action->body;
 
 				if ( $recipient && $subject && $body ) {
@@ -149,7 +149,7 @@ Class Formendpoint {
 						array( 'Content-Type: text/html; charset=UTF-8' ) );
 				}
 			} else if ( get_class( $action ) === 'Onvardgmbh\Formendpoint\Callback' ) {
-				( $action->function )( $post_id, $this->fields );
+				( $action->function )( $post_id, $this->fields, $this->data );
 			}
 		}
 		wp_die();
