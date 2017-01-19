@@ -21,8 +21,7 @@ Class Formendpoint {
 
 	function __construct( $posttype, $heading, $style ) {
 		if ( strlen( $posttype ) > 20 || preg_match( '/\s/', $posttype ) || preg_match( '/[A-Z]/', $posttype ) ) {
-			echo 'ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.';
-			return;
+			wp_die('ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.', '', ["response" => 400]);
 		}
 
 		$this->posttype   = $posttype;
@@ -160,6 +159,9 @@ Class Formendpoint {
 		if ( ! isset( $fields[ $key ] ) || ( ! isset( $data[ $key ] ) || $data[ $key ] === '' || ! count( $data[ $key ] ) ) ) {
 			unset( $data[ $key ] );
 		} elseif ( $fields[ $key ]->type === 'array' ) {
+			if($_SERVER["CONTENT_TYPE"] !== 'application/json') {
+				wp_die('Error: Arrays no longer supported for plain form-data requests.', '', ["response" => 400]);
+			}
 			foreach ( $value as $subkey => $value2 ) {
 				foreach ( $value2 as $subsubbkey => $value3 ) {
 					if ( ! isset( $fields[ $key ]->repeats[ $subsubbkey ] )
@@ -170,10 +172,13 @@ Class Formendpoint {
 						unset( $data[ $key ][ $subkey ][ $subsubbkey ] );
 						continue;
 					} elseif ( is_array( $value3 ) ) {
-						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
+						wp_die('Error: Currently array depth is limited to 1.', '', ["response" => 400]);
 					}
 				}
 			}
+		}
+		if($_SERVER["CONTENT_TYPE"] !== 'application/json' && $fields[ $key ]->type !== 'array') {
+            		$data[ $key ] = stripslashes($data[ $key ]);
 		}
 	}
 
@@ -204,7 +209,7 @@ Class Formendpoint {
 							$this->entryTitle .= $userinput[ $subfield->name ] . ' ';
 						}
 					} else {
-						return new WP_Error( 'broke', __( "Currently array depth is limited to 1", "my_textdomain" ) );
+						wp_die('Error: Currently array depth is limited to 1.', '', ["response" => 400]);
 					}
 				}
 			}
