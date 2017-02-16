@@ -6,7 +6,7 @@ class Callback
 
     public $function;
 
-    public static function make($function)
+    public static function make( $function )
     {
         $action = new Callback();
         $action->function = $function;

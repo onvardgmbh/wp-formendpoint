@@ -8,7 +8,7 @@ class Email
     public $subject;
     public $body;
 
-    public static function make($recipient, $subject, $body)
+    public static function make( $recipient, $subject, $body )
     {
         $action = new Email();
         $action->recipient = $recipient;

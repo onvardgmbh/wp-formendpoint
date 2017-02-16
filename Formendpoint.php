@@ -24,7 +24,7 @@ class Formendpoint
     function __construct( $posttype, $heading, $style )
     {
         if ( strlen( $posttype ) > 20 || preg_match( '/\s/', $posttype ) || preg_match( '/[A-Z]/', $posttype ) ) {
-            wp_die('ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.', '', ["response" => 400]);
+            wp_die( 'ERROR: The endpoint ' . $posttype . ' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.', '', ["response" => 400] );
         }
 
         $this->posttype   = $posttype;
@@ -93,18 +93,18 @@ class Formendpoint
             : $_POST;
 
         if ( ! wp_verify_nonce( $this->data['security'], $this->posttype ) ) {
-                wp_die('', '', ["response" => 403]);
+                wp_die( '', '', ["response" => 403] );
         }
 
         unset( $this->data['security'] );
         unset( $this->data['action'] );
         if ( isset( $this->validate_function ) && ! ( $this->validate_function )( $this->fields ) ) {
-                    wp_die('', '', ["response" => 403]);
+                    wp_die( '', '', ["response" => 403] );
         }
 
         foreach ( $this->honeypots as $honeypot ) {
             if ( ! isset( $this->data[ $honeypot->name ] ) || $this->data[ $honeypot->name ] !== $honeypot->equals ) {
-                wp_die($honeypot->name, '', ["response" => 403]);
+                wp_die( $honeypot->name, '', ["response" => 403] );
             }
             unset( $this->data[ $honeypot->name ] );
         }
@@ -169,8 +169,8 @@ class Formendpoint
             unset( $data[ $key ] );
             return;
         } elseif ( $fields[ $key ]->type === 'array' ) {
-            if ($_SERVER["CONTENT_TYPE"] !== 'application/json') {
-                wp_die('Error: Arrays no longer supported for plain form-data requests.', '', ["response" => 400]);
+            if ( $_SERVER["CONTENT_TYPE"] !== 'application/json' ) {
+                wp_die( 'Error: Arrays no longer supported for plain form-data requests.', '', ["response" => 400] );
             }
             foreach ( $value as $subkey => $value2 ) {
                 foreach ( $value2 as $subsubbkey => $value3 ) {
@@ -182,13 +182,13 @@ class Formendpoint
                         unset( $data[ $key ][ $subkey ][ $subsubbkey ] );
                         continue;
                     } elseif ( is_array( $value3 ) ) {
-                        wp_die('Error: Currently array depth is limited to 1.', '', ["response" => 400]);
+                        wp_die( 'Error: Currently array depth is limited to 1.', '', ["response" => 400] );
                     }
                 }
             }
         }
-        if ($_SERVER["CONTENT_TYPE"] !== 'application/json' && $fields[ $key ]->type !== 'array') {
-                    $data[ $key ] = stripslashes($data[ $key ]);
+        if ( $_SERVER["CONTENT_TYPE"] !== 'application/json' && $fields[ $key ]->type !== 'array' ) {
+                    $data[ $key ] = stripslashes( $data[ $key ] );
         }
     }
 
@@ -196,17 +196,17 @@ class Formendpoint
     {
         if ( $field->type !== 'array' ) {
             if ( isset( $field->required ) && ( ! isset( $value ) || $value === '' || ! count( $value ) ) ) {
-                        wp_die('Field "' . $field->name . '"is required', '', ["response" => 400]);
+                        wp_die( 'Field "' . $field->name . '"is required', '', ["response" => 400] );
             }
             if ( $field->type === 'email' && ( isset( $field->required ) || ! empty( $value ) ) && ! is_email( $value ) ) {
-                        wp_die($value . ' is not a valid email address.', '', ["response" => 400]);
+                        wp_die( $value . ' is not a valid email address.', '', ["response" => 400] );
             }
             if ( isset( $field->title ) ) {
                 $this->entryTitle .= ( $this->data[ $field->name ] ?? '' ) . ' ';
             }
         } else {
             if ( isset( $field->required ) && ! is_array( $value ) ) {
-                        wp_die('Field "' . $field->name . '"is required', '', ["response" => 400]);
+                        wp_die( 'Field "' . $field->name . '"is required', '', ["response" => 400] );
             }
             if ( ! is_array( $value ) ) {
                 return;
@@ -220,7 +220,7 @@ class Formendpoint
                             $this->entryTitle .= $userinput[ $subfield->name ] . ' ';
                         }
                     } else {
-                        wp_die('Error: Currently array depth is limited to 1.', '', ["response" => 400]);
+                        wp_die( 'Error: Currently array depth is limited to 1.', '', ["response" => 400] );
                     }
                 }
             }

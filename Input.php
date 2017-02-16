@@ -10,7 +10,7 @@ class Input
     public $title;
     public $repeats;
 
-    public static function make($type, $name, $label = null)
+    public static function make( $type, $name, $label = null )
     {
         $input = new Input();
         $input->type = $type;
@@ -37,13 +37,13 @@ class Input
         return $this;
     }
 
-    public function repeats($fields)
+    public function repeats( $fields )
     {
-        if ($this->type !== 'array') {
+        if ( $this->type !== 'array' ) {
             return new WP_Error( 'broke', __( "Non array inputs can't be repeated.", "my_textdomain" ) );
         }
-        foreach ($fields as $field) {
-            $this->repeats[$field->name] = $field;
+        foreach ( $fields as $field ) {
+            $this->repeats[ $field->name ] = $field;
         }
         return $this;
     }
