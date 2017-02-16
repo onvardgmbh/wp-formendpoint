@@ -1,15 +1,17 @@
 <?php
-Namespace Onvardgmbh\Formendpoint;
+namespace Onvardgmbh\Formendpoint;
 
-Class Honeypot {
+class Honeypot
+{
 
-	public $name;
-	public $equals;
+    public $name;
+    public $equals;
 
-	public static function make($name, $equals) {
-		$input = new Honeypot();
-		$input->name = $name;
-		$input->equals = $equals;
-		return $input;
-	}
+    public static function make($name, $equals)
+    {
+        $input = new Honeypot();
+        $input->name = $name;
+        $input->equals = $equals;
+        return $input;
+    }
 }

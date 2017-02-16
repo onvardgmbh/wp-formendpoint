@@ -1,13 +1,15 @@
 <?php
-Namespace Onvardgmbh\Formendpoint;
+namespace Onvardgmbh\Formendpoint;
 
-Class Callback {
+class Callback
+{
 
-	public $function;
+    public $function;
 
-	public static function make($function) {
-		$action = new Callback();
-		$action->function = $function;
-		return $action;
-	}
+    public static function make($function)
+    {
+        $action = new Callback();
+        $action->function = $function;
+        return $action;
+    }
 }
