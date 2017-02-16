@@ -158,6 +158,7 @@ Class Formendpoint {
 	private function sanitizeField( &$data, &$fields, $key, $value ) {
 		if ( ! isset( $fields[ $key ] ) || ( ! isset( $data[ $key ] ) || $data[ $key ] === '' || ! count( $data[ $key ] ) ) ) {
 			unset( $data[ $key ] );
+			return;
 		} elseif ( $fields[ $key ]->type === 'array' ) {
 			if($_SERVER["CONTENT_TYPE"] !== 'application/json') {
 				wp_die('Error: Arrays no longer supported for plain form-data requests.', '', ["response" => 400]);
