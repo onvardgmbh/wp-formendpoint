@@ -8,6 +8,7 @@ class Input
     public $required;
     public $hide;
     public $title;
+    public $format;
     public $repeats;
 
     public static function make( $type, $name, $label = null )
@@ -28,6 +29,25 @@ class Input
     public function setTitle()
     {
         $this->title = true;
+        return $this;
+    }
+
+    /**
+     * Register a function to format the value for displaying.
+     *
+     * To pretty print numbers for example, you could use something like:
+     *     Input::make('text', 'foo')
+     *         ->setFormat(function ($value) {
+     *             return number_format($value, 2, '.', ',');
+     *         });
+     *
+     * @param callable $callback The formatting function; Should return a string
+     *
+     * @return $this
+     */
+    public function setFormat( $callback )
+    {
+        $this->format = $callback;
         return $this;
     }
 
