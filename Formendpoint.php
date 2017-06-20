@@ -268,6 +268,8 @@ class Formendpoint
                     if ( isset( $this->fields[ $key ] ) ) {
                         if ( $this->fields[ $key ]->type === 'array' ) {
                             $data[ $key ] = json_decode( $value[0], true );
+                        } elseif ( is_callable( $this->fields[ $key ]->format ) ) {
+                            $data[ $key ] = ( $this->fields[ $key ]->format ) ( $value[0] );
                         } else {
                             $data[ $key ] = $value[0];
                         }
