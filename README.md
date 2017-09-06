@@ -85,6 +85,29 @@ Creates the formendpoint with a menu item in the wordpress backend.
         Input::make( 'email', 'mail' )
     ] );
 ```
+
+### show_in_menu( $showInMenu )
+```php
+    ->show_in_menu('edit.php?post_type=event');
+```
+
+### setLabels( $labels )
+```php
+    ->setLabels( [
+        'name'               => _x( 'Eintrag', 'post type general name' ),
+        'singular_name'      => _x( 'Eintrag', 'post type singular name' ),
+        'add_new_item'       => __( 'Neuer Eintrag' ),
+        'edit_item'          => __( 'Eintrag bearbeiten' ),
+        'new_item'           => __( 'Neuer Eintrag' ),
+        'all_items'          => __( 'Alle Einträge' ),
+        'view_item'          => __( 'Eintrag ansehen' ),
+        'search_items'       => __( 'Einträge durchsuchen' ),
+        'not_found'          => __( 'Keinen Eintrag gefunden' ),
+        'not_found_in_trash' => __( 'Keine Einträge im Papierkorb gefunden' ),
+        'parent_item_colon'  => '',
+        'menu_name'          => $this->heading,
+    ] );
+```
 Registers the form input fields. The form only accepts and saves registered inputs. If a required inputs is missing the form fails.
 #### Input::make( $type, $name, $label=null )
 
