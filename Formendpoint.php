@@ -12,7 +12,9 @@ class Formendpoint
     public $actions;
     public $honeypots;
     public $entryTitle;
+    public $labels;
     public $show_ui;
+	public $showInMenu;
     public $validate_function;
 
 
@@ -79,6 +81,18 @@ class Formendpoint
         $this->show_ui = $show_ui;
         return $this;
     }
+
+	public function show_in_menu( $showInMenu )
+	{
+		$this->showInMenu = $showInMenu;
+		return $this;
+	}
+
+	public function setLabels( $labels )
+	{
+		$this->labels = $labels;
+		return $this;
+	}
 
     public function validate( $function )
     {
@@ -229,31 +243,41 @@ class Formendpoint
 
     public function dates_post_type_init()
     {
-        register_post_type( $this->posttype, array(
-            'labels'       => array(
-                'name'               => _x( 'Eintrag', 'post type general name' ),
-                'singular_name'      => _x( 'Eintrag', 'post type singular name' ),
-                'add_new_item'       => __( 'Neuer Eintrag' ),
-                'edit_item'          => __( 'Eintrag bearbeiten' ),
-                'new_item'           => __( 'Neuer Eintrag' ),
-                'all_items'          => __( 'Alle Einträge' ),
-                'view_item'          => __( 'Eintrag ansehen' ),
-                'search_items'       => __( 'Einträge durchsuchen' ),
-                'not_found'          => __( 'Keinen Eintrag gefunden' ),
-                'not_found_in_trash' => __( 'Keine Einträge im Papierkorb gefunden' ),
-                'parent_item_colon'  => '',
-                'menu_name'          => $this->heading
-            ),
-            'public'       => false,
-            'show_ui'      => $this->show_ui,
-            'menu_icon'    => 'dashicons-email',
-            'supports'     => array( '' ),
-            'has_archive'  => false,
-            'capabilities' => array(
-                'create_posts' => 'do_not_allow'
-            ),
-            'map_meta_cap' => true
-        ) );
+	    $options = [
+		    'labels'       => [
+			    'name'               => _x( 'Eintrag', 'post type general name' ),
+			    'singular_name'      => _x( 'Eintrag', 'post type singular name' ),
+			    'add_new_item'       => __( 'Neuer Eintrag' ),
+			    'edit_item'          => __( 'Eintrag bearbeiten' ),
+			    'new_item'           => __( 'Neuer Eintrag' ),
+			    'all_items'          => __( 'Alle Einträge' ),
+			    'view_item'          => __( 'Eintrag ansehen' ),
+			    'search_items'       => __( 'Einträge durchsuchen' ),
+			    'not_found'          => __( 'Keinen Eintrag gefunden' ),
+			    'not_found_in_trash' => __( 'Keine Einträge im Papierkorb gefunden' ),
+			    'parent_item_colon'  => '',
+			    'menu_name'          => $this->heading,
+		    ],
+		    'public'       => false,
+		    'show_ui'      => $this->show_ui,
+		    'menu_icon'    => 'dashicons-email',
+		    'supports'     => [ '' ],
+		    'has_archive'  => false,
+		    'capabilities' => [
+			    'create_posts' => 'do_not_allow',
+		    ],
+		    'map_meta_cap' => true,
+	    ];
+
+	    if(!empty($this->labels)) {
+		    $options['labels'] = $this->labels;
+	    }
+
+    	if(!empty($this->showInMenu)) {
+		    $options['show_in_menu'] = $this->showInMenu;
+	    }
+
+        register_post_type( $this->posttype, $options );
     }
 
     public function adding_custom_meta_boxes( $post )
