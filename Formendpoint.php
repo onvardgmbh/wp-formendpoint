@@ -207,7 +207,7 @@ class Formendpoint
                 }
             }
         }
-        if ($_SERVER['CONTENT_TYPE'] !== 'application/json' && $fields[$key]->type !== 'array') {
+        if ($_SERVER['CONTENT_TYPE'] !== 'application/json' && $fields[$key]->type !== 'array' && is_string($data[$key])) {
             $data[$key] = stripslashes($data[$key]);
         }
     }
