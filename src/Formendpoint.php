@@ -17,12 +17,12 @@ class Formendpoint
     public $showInMenu;
     public $validate_function;
 
-    public static function make($posttype, $heading, $style = 'main')
+    public static function make(string $posttype, string $heading, string $style = 'main'): Formendpoint
     {
         return new self($posttype, $heading, $style);
     }
 
-    public function __construct($posttype, $heading, $style)
+    public function __construct(string $posttype, string $heading, string $style)
     {
         if (strlen($posttype) > 20 || preg_match('/\s/', $posttype) || preg_match('/[A-Z]/', $posttype)) {
             wp_die('ERROR: The endpoint '.$posttype.' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.', '', ['response' => 400]);
@@ -38,7 +38,7 @@ class Formendpoint
         $this->show_ui = true;
 
         add_action('init', array($this, 'dates_post_type_init'));
-        add_action('add_meta_boxes', array($this, 'adding_custom_meta_boxes'));
+        add_action('add_meta_boxes_'.$this->posttype, array($this, 'adding_custom_meta_boxes'));
         add_action('wp_enqueue_scripts', function () {
             wp_localize_script($this->style, $this->posttype, array(
                 // URL to wp-admin/admin-ajax.php to process the request
@@ -51,7 +51,10 @@ class Formendpoint
         add_action('wp_ajax_nopriv_'.$this->posttype, array($this, 'handleformsubmit'));
     }
 
-    public function add_actions($actions)
+    /**
+     * @param Callback[]|Email[] $actions
+     */
+    public function add_actions(array $actions): Formendpoint
     {
         foreach ($actions as $action) {
             $this->actions[] = $action;
@@ -60,7 +63,10 @@ class Formendpoint
         return $this;
     }
 
-    public function add_honeypots($honeypots)
+    /**
+     * @param Honeypot[] $honeypots
+     */
+    public function add_honeypots(array $honeypots): Formendpoint
     {
         foreach ($honeypots as $honeypot) {
             $this->honeypots[] = $honeypot;
@@ -69,7 +75,10 @@ class Formendpoint
         return $this;
     }
 
-    public function add_fields($fields)
+    /**
+     * @param Input[] $fields
+     */
+    public function add_fields(array $fields): Formendpoint
     {
         foreach ($fields as $field) {
             $this->fields[$field->name] = $field;
@@ -78,28 +87,28 @@ class Formendpoint
         return $this;
     }
 
-    public function show_ui($show_ui)
+    public function show_ui(bool $show_ui): Formendpoint
     {
         $this->show_ui = $show_ui;
 
         return $this;
     }
 
-    public function show_in_menu($showInMenu)
+    public function show_in_menu(bool $showInMenu): Formendpoint
     {
         $this->showInMenu = $showInMenu;
 
         return $this;
     }
 
-    public function setLabels($labels)
+    public function setLabels(array $labels): Formendpoint
     {
         $this->labels = $labels;
 
         return $this;
     }
 
-    public function validate($function)
+    public function validate(callable $function): Formendpoint
     {
         $this->validate_function = $function;
 
@@ -182,7 +191,7 @@ class Formendpoint
         wp_die();
     }
 
-    private function sanitizeField(&$data, &$fields, $key, $value)
+    private function sanitizeField(array &$data, array &$fields, string $key, $value)
     {
         if (!isset($fields[$key]) || (!isset($data[$key]) || $data[$key] === '' || !count($data[$key]))) {
             unset($data[$key]);
@@ -212,7 +221,10 @@ class Formendpoint
         }
     }
 
-    private function validateField($field, $value)
+    /**
+     * @param Input $field - The input to validate
+     */
+    private function validateField(Input $field, $value)
     {
         if ($field->type !== 'array') {
             if (isset($field->required) && (!isset($value) || $value === '' || !count($value))) {
@@ -292,9 +304,8 @@ class Formendpoint
             'my-meta-box',
             __('Eintrag'),
             function () {
-                global $post;
                 $data = [];
-                foreach (get_post_custom() as $key => $value) {
+                foreach (get_post_custom() as $key => $value) { //TODO Iterate over registered inputs instead
                     if (isset($this->fields[$key])) {
                         if ($this->fields[$key]->type === 'array') {
                             $data[$key] = json_decode($value[0], true);
@@ -306,8 +317,7 @@ class Formendpoint
                     }
                 }
 
-                echo $post->post_content;
-                echo $this->template_replace('{{all}}', $data, 'all');
+                echo $this->template_replace('{{all}}', $data, 'all'); //TODO Use templating
             },
             $this->posttype,
             'normal'

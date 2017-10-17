@@ -8,7 +8,12 @@ class Email
     public $subject;
     public $body;
 
-    public static function make($recipient, $subject, $body)
+    /**
+     * @param string|callable $recipient
+     * @param string|callable $subject
+     * @param string|callable $body
+     */
+    public static function make($recipient, $subject, $body): Email
     {
         $action = new self();
         $action->recipient = $recipient;

@@ -4,12 +4,14 @@ namespace Onvardgmbh\Formendpoint;
 
 class Input
 {
-    public $name;
-    public $required;
-    public $hide;
-    public $title;
     public $format;
+    public $hide;
+    public $label;
+    public $name;
     public $repeats;
+    public $required;
+    public $title;
+    public $type;
 
     public static function make($type, $name, $label = null)
     {
@@ -65,7 +67,7 @@ class Input
     public function repeats($fields)
     {
         if ($this->type !== 'array') {
-            return new WP_Error('broke', __("Non array inputs can't be repeated.", 'my_textdomain'));
+            return new \WP_Error('broke', __("Non array inputs can't be repeated.", 'my_textdomain'));
         }
         foreach ($fields as $field) {
             $this->repeats[$field->name] = $field;

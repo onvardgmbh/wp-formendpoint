@@ -1,0 +1,26 @@
+includes:
+  - vendor/phpstan/phpstan/conf/config.level5.neon
+
+parameters:
+  bootstrap: %rootDir%/../../../phpstan-bootstrap.php
+  checkFunctionArgumentTypes: true
+  checkNullables: true
+
+  ignoreErrors:
+    - '#Function add_action not found\.$#'
+    - '#Function add_meta_box not found\.$#'
+    - '#Function add_post_meta not found\.$#'
+    - '#Function admin_url not found\.$#'
+    - '#Function esc_html not found\.$#'
+    - '#Function get_post_custom not found\.$#'
+    - '#Function is_email not found\.$#'
+    - '#Function register_post_type not found\.$#'
+    - '#Function wp_create_nonce not found\.$#'
+    - '#Function wp_die not found\.$#'
+    - '#Function wp_insert_post not found\.$#'
+    - '#Function wp_mail not found\.$#'
+    - '#Function wp_localize_script not found\.$#'
+    - '#Function wp_verify_nonce not found\.$#'
+    - '#Function _x not found\.$#'
+    - '#Function __ not found\.$#'
+    - '#Instantiated class WP_Error not found\.$#'
