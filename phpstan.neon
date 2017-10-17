@@ -7,12 +7,21 @@ parameters:
   checkNullables: true
 
   ignoreErrors:
+    - '#Access to property \$is_search on an unknown class WP_Query\.$#'
+    - '#Call to method parse_query\(\) on an unknown class WP_Query\.$#'
+    - '#Call to method get_posts\(\) on an unknown class WP_Query\.$#'
+    - '#Call to method have_posts\(\) on an unknown class WP_Query\.$#'
+    - '#Call to method set\(\) on an unknown class WP_Query\.$#'
+    - '#Call to method the_post\(\) on an unknown class WP_Query\.$#'
+    - '#Constant DOING_AJAX not found\.$#'
     - '#Function add_action not found\.$#'
     - '#Function add_meta_box not found\.$#'
     - '#Function add_post_meta not found\.$#'
     - '#Function admin_url not found\.$#'
     - '#Function esc_html not found\.$#'
+    - '#Function current_user_can not found\.$#'
     - '#Function get_post_custom not found\.$#'
+    - '#Function get_post_meta not found\.$#'
     - '#Function is_email not found\.$#'
     - '#Function register_post_type not found\.$#'
     - '#Function wp_create_nonce not found\.$#'
@@ -24,3 +33,5 @@ parameters:
     - '#Function _x not found\.$#'
     - '#Function __ not found\.$#'
     - '#Instantiated class WP_Error not found\.$#'
+    - '#Instantiated class WP_Query not found\.$#'
+    - '#Undefined variable: \$post$#'

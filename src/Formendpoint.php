@@ -5,6 +5,7 @@ namespace Onvardgmbh\Formendpoint;
 class Formendpoint
 {
     private $data;
+    private $csv_export_callback;
     public $posttype;
     public $heading;
     public $style;
@@ -83,6 +84,18 @@ class Formendpoint
         foreach ($fields as $field) {
             $this->fields[$field->name] = $field;
         }
+
+        return $this;
+    }
+
+    public function csv_export($callback = null): Formendpoint
+    {
+        if (!empty($callback)) {
+            $this->csv_export_callback = $callback;
+        }
+
+        add_action('restrict_manage_posts', [$this, 'add_csv_button']);
+        add_action('admin_init', [$this, 'csv_export_handler']);
 
         return $this;
     }
@@ -296,6 +309,63 @@ class Formendpoint
         }
 
         register_post_type($this->posttype, $options);
+    }
+
+    public function add_csv_button()
+    {
+        if (!isset($_GET['post_type']) || $this->posttype !== $_GET['post_type']) {
+            return;
+        }
+
+        echo '<input type="submit" class="button" style="margin:1px 8px 0 0" name="'.$this->posttype.'_csv_export" value="'.
+            __('CSV export').'">';
+    }
+
+    public function csv_export_handler()
+    {
+        if (empty($_GET[$this->posttype.'_csv_export']) || !current_user_can('edit_others_posts')) {
+            return;
+        }
+
+        $query = new \WP_Query();
+        $query->parse_query($_SERVER['QUERY_STRING']);
+        $query->set('posts_per_page', -1);
+        $query->set('post_status', 'publish');
+        $query->is_search = true;
+        $query->get_posts();
+
+        // First line with column headings
+        $data = [array_map(function ($input) {
+            return $input->label ?? $input->name;
+        }, $this->fields)];
+
+        // Collect the posts
+        while ($query->have_posts()) {
+            $query->the_post();
+            global $post;
+            $data[] = array_map(function ($input) use ($post) {
+                return get_post_meta($post->ID, $input->name, true);
+            }, $this->fields);
+        }
+
+        if (!empty($this->csv_export_callback)) {
+            $data = ($this->csv_export_callback)($this->fields, $data);
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename='.$this->posttype.'-export-'.date('Y-m-d_His').'.csv');
+
+        $outstream = fopen('php://output', 'w');
+        foreach ($data as $line) {
+            fputcsv($outstream, $line, ';', '"');
+        }
+        fclose($outstream);
+
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            wp_die();
+        } else {
+            die();
+        }
     }
 
     public function adding_custom_meta_boxes($post)
