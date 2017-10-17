@@ -66,7 +66,7 @@ class Input
 
     public function repeats($fields)
     {
-        if ($this->type !== 'array') {
+        if ('array' !== $this->type) {
             return new \WP_Error('broke', __("Non array inputs can't be repeated.", 'my_textdomain'));
         }
         foreach ($fields as $field) {

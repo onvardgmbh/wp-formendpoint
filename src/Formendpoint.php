@@ -117,7 +117,7 @@ class Formendpoint
 
     public function handleformsubmit()
     {
-        $this->data = $_SERVER['CONTENT_TYPE'] === 'application/json'
+        $this->data = 'application/json' === $_SERVER['CONTENT_TYPE']
             ? json_decode(file_get_contents('php://input'), true)
             : $_POST;
 
@@ -166,16 +166,16 @@ class Formendpoint
         }
 
         foreach ($this->actions as $action) {
-            if (get_class($action) === 'Onvardgmbh\Formendpoint\Email') {
-                $recipient = gettype($action->recipient) === 'object'
+            if ('Onvardgmbh\Formendpoint\Email' === get_class($action)) {
+                $recipient = 'object' === gettype($action->recipient)
                     ? ($action->recipient)($post_id, $this->fields, $this->data)
                     : $action->recipient;
 
-                $subject = gettype($action->subject) === 'object'
+                $subject = 'object' === gettype($action->subject)
                     ? ($action->subject)($post_id, $this->fields, $this->data)
                     : $action->subject;
 
-                $body = gettype($action->body) === 'object'
+                $body = 'object' === gettype($action->body)
                     ? ($action->body)($post_id, $this->fields, $this->data)
                     : $action->body;
 
@@ -184,7 +184,7 @@ class Formendpoint
                         $this->template_replace($body, $this->data, 'Alle inputs'),
                         array('Content-Type: text/html; charset=UTF-8'));
                 }
-            } elseif (get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
+            } elseif ('Onvardgmbh\Formendpoint\Callback' === get_class($action)) {
                 ($action->function)($post_id, $this->fields, $this->data);
             }
         }
@@ -193,12 +193,12 @@ class Formendpoint
 
     private function sanitizeField(array &$data, array &$fields, string $key, $value)
     {
-        if (!isset($fields[$key]) || (!isset($data[$key]) || $data[$key] === '' || !count($data[$key]))) {
+        if (!isset($fields[$key]) || (!isset($data[$key]) || '' === $data[$key] || !count($data[$key]))) {
             unset($data[$key]);
 
             return;
-        } elseif ($fields[$key]->type === 'array') {
-            if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
+        } elseif ('array' === $fields[$key]->type) {
+            if ('application/json' !== $_SERVER['CONTENT_TYPE']) {
                 wp_die('Error: Arrays no longer supported for plain form-data requests.', '', ['response' => 400]);
             }
             foreach ($value as $subkey => $value2) {
@@ -216,7 +216,7 @@ class Formendpoint
                 }
             }
         }
-        if ($_SERVER['CONTENT_TYPE'] !== 'application/json' && $fields[$key]->type !== 'array' && is_string($data[$key])) {
+        if ('application/json' !== $_SERVER['CONTENT_TYPE'] && 'array' !== $fields[$key]->type && is_string($data[$key])) {
             $data[$key] = stripslashes($data[$key]);
         }
     }
@@ -226,11 +226,11 @@ class Formendpoint
      */
     private function validateField(Input $field, $value)
     {
-        if ($field->type !== 'array') {
-            if (isset($field->required) && (!isset($value) || $value === '' || !count($value))) {
+        if ('array' !== $field->type) {
+            if (isset($field->required) && (!isset($value) || '' === $value || !count($value))) {
                 wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
             }
-            if ($field->type === 'email' && (isset($field->required) || !empty($value)) && !is_email($value)) {
+            if ('email' === $field->type && (isset($field->required) || !empty($value)) && !is_email($value)) {
                 wp_die($value.' is not a valid email address.', '', ['response' => 400]);
             }
             if (isset($field->title)) {
@@ -246,7 +246,7 @@ class Formendpoint
 
             foreach ($value as $userinput) {
                 foreach ($field->repeats as $subfield) {
-                    if ($subfield->type !== 'array') {
+                    if ('array' !== $subfield->type) {
                         $this->validateField($subfield, $userinput[$subfield->name]);
                         if (isset($field->title)) {
                             $this->entryTitle .= $userinput[$subfield->name].' ';
@@ -307,7 +307,7 @@ class Formendpoint
                 $data = [];
                 foreach (get_post_custom() as $key => $value) { //TODO Iterate over registered inputs instead
                     if (isset($this->fields[$key])) {
-                        if ($this->fields[$key]->type === 'array') {
+                        if ('array' === $this->fields[$key]->type) {
                             $data[$key] = json_decode($value[0], true);
                         } elseif (is_callable($this->fields[$key]->format)) {
                             $data[$key] = ($this->fields[$key]->format)($value[0]);
@@ -347,8 +347,8 @@ class Formendpoint
             $markup .= '<p>';
             $markup .= '<b>'.esc_html($field->label ?: $field->name).': </b>';
 
-            if ($field->type !== 'array') {
-                $markup .= $field->type === 'textarea' ? '<br>' : '';
+            if ('array' !== $field->type) {
+                $markup .= 'textarea' === $field->type ? '<br>' : '';
                 $markup .= nl2br(esc_html($value));
                 $template_content[$key] = nl2br(esc_html($value));
                 $markup .= '</p>';
