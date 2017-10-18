@@ -5,7 +5,7 @@ namespace Onvardgmbh\Formendpoint;
 class Formendpoint
 {
     private $data;
-    private $csv_export_callback;
+    private $csvExportCallback;
     public $posttype;
     public $heading;
     public $style;
@@ -88,14 +88,14 @@ class Formendpoint
         return $this;
     }
 
-    public function csv_export($callback = null): Formendpoint
+    public function csvExport($callback = null): Formendpoint
     {
         if (!empty($callback)) {
-            $this->csv_export_callback = $callback;
+            $this->csvExportCallback = $callback;
         }
 
-        add_action('restrict_manage_posts', [$this, 'add_csv_button']);
-        add_action('admin_init', [$this, 'csv_export_handler']);
+        add_action('restrict_manage_posts', [$this, 'addCsvButton']);
+        add_action('admin_init', [$this, 'csvExportHandler']);
 
         return $this;
     }
@@ -311,7 +311,7 @@ class Formendpoint
         register_post_type($this->posttype, $options);
     }
 
-    public function add_csv_button()
+    public function addCsvButton()
     {
         if (!isset($_GET['post_type']) || $this->posttype !== $_GET['post_type']) {
             return;
@@ -321,7 +321,7 @@ class Formendpoint
             __('CSV export').'">';
     }
 
-    public function csv_export_handler()
+    public function csvExportHandler()
     {
         if (empty($_GET[$this->posttype.'_csv_export']) || !current_user_can('edit_others_posts')) {
             return;
@@ -348,8 +348,8 @@ class Formendpoint
             }, $this->fields);
         }
 
-        if (!empty($this->csv_export_callback)) {
-            $data = ($this->csv_export_callback)($this->fields, $data);
+        if (!empty($this->csvExportCallback)) {
+            $data = ($this->csvExportCallback)($this->fields, $data);
         }
 
         header('Content-Type: text/csv; charset=utf-8');
@@ -361,11 +361,7 @@ class Formendpoint
         }
         fclose($outstream);
 
-        if (defined('DOING_AJAX') && DOING_AJAX) {
-            wp_die();
-        } else {
-            die();
-        }
+        die();
     }
 
     public function adding_custom_meta_boxes($post)
