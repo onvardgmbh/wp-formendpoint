@@ -13,7 +13,6 @@ parameters:
     - '#Call to method have_posts\(\) on an unknown class WP_Query\.$#'
     - '#Call to method set\(\) on an unknown class WP_Query\.$#'
     - '#Call to method the_post\(\) on an unknown class WP_Query\.$#'
-    - '#Constant DOING_AJAX not found\.$#'
     - '#Function add_action not found\.$#'
     - '#Function add_meta_box not found\.$#'
     - '#Function add_post_meta not found\.$#'
