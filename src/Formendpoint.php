@@ -348,7 +348,7 @@ class Formendpoint
             }, $this->fields);
         }
 
-        if (!empty($this->csvExportCallback)) {
+        if (is_callable($this->csvExportCallback)) {
             $data = ($this->csvExportCallback)($this->fields, $data);
         }
 
