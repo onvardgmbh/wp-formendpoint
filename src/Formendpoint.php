@@ -5,6 +5,7 @@ namespace Onvardgmbh\Formendpoint;
 class Formendpoint
 {
     private $data;
+    private $csvExportCallback;
     public $posttype;
     public $heading;
     public $style;
@@ -17,12 +18,12 @@ class Formendpoint
     public $showInMenu;
     public $validate_function;
 
-    public static function make($posttype, $heading, $style = 'main')
+    public static function make(string $posttype, string $heading, string $style = 'main'): Formendpoint
     {
         return new self($posttype, $heading, $style);
     }
 
-    public function __construct($posttype, $heading, $style)
+    public function __construct(string $posttype, string $heading, string $style)
     {
         if (strlen($posttype) > 20 || preg_match('/\s/', $posttype) || preg_match('/[A-Z]/', $posttype)) {
             wp_die('ERROR: The endpoint '.$posttype.' couldn\'nt be created. Please make sure the posttype name contains max 20 chars and no whitespaces or uppercase letters.', '', ['response' => 400]);
@@ -38,7 +39,7 @@ class Formendpoint
         $this->show_ui = true;
 
         add_action('init', array($this, 'dates_post_type_init'));
-        add_action('add_meta_boxes', array($this, 'adding_custom_meta_boxes'));
+        add_action('add_meta_boxes_'.$this->posttype, array($this, 'adding_custom_meta_boxes'));
         add_action('wp_enqueue_scripts', function () {
             wp_localize_script($this->style, $this->posttype, array(
                 // URL to wp-admin/admin-ajax.php to process the request
@@ -51,7 +52,10 @@ class Formendpoint
         add_action('wp_ajax_nopriv_'.$this->posttype, array($this, 'handleformsubmit'));
     }
 
-    public function add_actions($actions)
+    /**
+     * @param Callback[]|Email[] $actions
+     */
+    public function add_actions(array $actions): Formendpoint
     {
         foreach ($actions as $action) {
             $this->actions[] = $action;
@@ -60,7 +64,10 @@ class Formendpoint
         return $this;
     }
 
-    public function add_honeypots($honeypots)
+    /**
+     * @param Honeypot[] $honeypots
+     */
+    public function add_honeypots(array $honeypots): Formendpoint
     {
         foreach ($honeypots as $honeypot) {
             $this->honeypots[] = $honeypot;
@@ -69,7 +76,10 @@ class Formendpoint
         return $this;
     }
 
-    public function add_fields($fields)
+    /**
+     * @param Input[] $fields
+     */
+    public function add_fields(array $fields): Formendpoint
     {
         foreach ($fields as $field) {
             $this->fields[$field->name] = $field;
@@ -78,28 +88,40 @@ class Formendpoint
         return $this;
     }
 
-    public function show_ui($show_ui)
+    public function csvExport($callback = null): Formendpoint
+    {
+        if (!empty($callback)) {
+            $this->csvExportCallback = $callback;
+        }
+
+        add_action('restrict_manage_posts', [$this, 'addCsvButton']);
+        add_action('admin_init', [$this, 'csvExportHandler']);
+
+        return $this;
+    }
+
+    public function show_ui(bool $show_ui): Formendpoint
     {
         $this->show_ui = $show_ui;
 
         return $this;
     }
 
-    public function show_in_menu($showInMenu)
+    public function show_in_menu(bool $showInMenu): Formendpoint
     {
         $this->showInMenu = $showInMenu;
 
         return $this;
     }
 
-    public function setLabels($labels)
+    public function setLabels(array $labels): Formendpoint
     {
         $this->labels = $labels;
 
         return $this;
     }
 
-    public function validate($function)
+    public function validate(callable $function): Formendpoint
     {
         $this->validate_function = $function;
 
@@ -108,7 +130,7 @@ class Formendpoint
 
     public function handleformsubmit()
     {
-        $this->data = $_SERVER['CONTENT_TYPE'] === 'application/json'
+        $this->data = 'application/json' === $_SERVER['CONTENT_TYPE']
             ? json_decode(file_get_contents('php://input'), true)
             : $_POST;
 
@@ -157,16 +179,16 @@ class Formendpoint
         }
 
         foreach ($this->actions as $action) {
-            if (get_class($action) === 'Onvardgmbh\Formendpoint\Email') {
-                $recipient = gettype($action->recipient) === 'object'
+            if ('Onvardgmbh\Formendpoint\Email' === get_class($action)) {
+                $recipient = 'object' === gettype($action->recipient)
                     ? ($action->recipient)($post_id, $this->fields, $this->data)
                     : $action->recipient;
 
-                $subject = gettype($action->subject) === 'object'
+                $subject = 'object' === gettype($action->subject)
                     ? ($action->subject)($post_id, $this->fields, $this->data)
                     : $action->subject;
 
-                $body = gettype($action->body) === 'object'
+                $body = 'object' === gettype($action->body)
                     ? ($action->body)($post_id, $this->fields, $this->data)
                     : $action->body;
 
@@ -175,21 +197,21 @@ class Formendpoint
                         $this->template_replace($body, $this->data, 'Alle inputs'),
                         array('Content-Type: text/html; charset=UTF-8'));
                 }
-            } elseif (get_class($action) === 'Onvardgmbh\Formendpoint\Callback') {
+            } elseif ('Onvardgmbh\Formendpoint\Callback' === get_class($action)) {
                 ($action->function)($post_id, $this->fields, $this->data);
             }
         }
         wp_die();
     }
 
-    private function sanitizeField(&$data, &$fields, $key, $value)
+    private function sanitizeField(array &$data, array &$fields, string $key, $value)
     {
-        if (!isset($fields[$key]) || (!isset($data[$key]) || $data[$key] === '' || !count($data[$key]))) {
+        if (!isset($fields[$key]) || (!isset($data[$key]) || '' === $data[$key] || !count($data[$key]))) {
             unset($data[$key]);
 
             return;
-        } elseif ($fields[$key]->type === 'array') {
-            if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
+        } elseif ('array' === $fields[$key]->type) {
+            if ('application/json' !== $_SERVER['CONTENT_TYPE']) {
                 wp_die('Error: Arrays no longer supported for plain form-data requests.', '', ['response' => 400]);
             }
             foreach ($value as $subkey => $value2) {
@@ -207,18 +229,21 @@ class Formendpoint
                 }
             }
         }
-        if ($_SERVER['CONTENT_TYPE'] !== 'application/json' && $fields[$key]->type !== 'array' && is_string($data[$key])) {
+        if ('application/json' !== $_SERVER['CONTENT_TYPE'] && 'array' !== $fields[$key]->type && is_string($data[$key])) {
             $data[$key] = stripslashes($data[$key]);
         }
     }
 
-    private function validateField($field, $value)
+    /**
+     * @param Input $field - The input to validate
+     */
+    private function validateField(Input $field, $value)
     {
-        if ($field->type !== 'array') {
-            if (isset($field->required) && (!isset($value) || $value === '' || !count($value))) {
+        if ('array' !== $field->type) {
+            if (isset($field->required) && (!isset($value) || '' === $value || !count($value))) {
                 wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
             }
-            if ($field->type === 'email' && (isset($field->required) || !empty($value)) && !is_email($value)) {
+            if ('email' === $field->type && (isset($field->required) || !empty($value)) && !is_email($value)) {
                 wp_die($value.' is not a valid email address.', '', ['response' => 400]);
             }
             if (isset($field->title)) {
@@ -234,7 +259,7 @@ class Formendpoint
 
             foreach ($value as $userinput) {
                 foreach ($field->repeats as $subfield) {
-                    if ($subfield->type !== 'array') {
+                    if ('array' !== $subfield->type) {
                         $this->validateField($subfield, $userinput[$subfield->name]);
                         if (isset($field->title)) {
                             $this->entryTitle .= $userinput[$subfield->name].' ';
@@ -286,17 +311,69 @@ class Formendpoint
         register_post_type($this->posttype, $options);
     }
 
+    public function addCsvButton()
+    {
+        if (!isset($_GET['post_type']) || $this->posttype !== $_GET['post_type']) {
+            return;
+        }
+
+        echo '<input type="submit" class="button" style="margin:1px 8px 0 0" name="'.$this->posttype.'_csv_export" value="'.
+            __('CSV export').'">';
+    }
+
+    public function csvExportHandler()
+    {
+        if (empty($_GET[$this->posttype.'_csv_export']) || !current_user_can('edit_others_posts')) {
+            return;
+        }
+
+        $query = new \WP_Query();
+        $query->parse_query($_SERVER['QUERY_STRING']);
+        $query->set('posts_per_page', -1);
+        $query->set('post_status', 'publish');
+        $query->is_search = true;
+        $query->get_posts();
+
+        // First line with column headings
+        $data = [array_map(function ($input) {
+            return $input->label ?? $input->name;
+        }, $this->fields)];
+
+        // Collect the posts
+        while ($query->have_posts()) {
+            $query->the_post();
+            global $post;
+            $data[] = array_map(function ($input) use ($post) {
+                return get_post_meta($post->ID, $input->name, true);
+            }, $this->fields);
+        }
+
+        if (is_callable($this->csvExportCallback)) {
+            $data = ($this->csvExportCallback)($this->fields, $data);
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename='.$this->posttype.'-export-'.date('Y-m-d_His').'.csv');
+
+        $outstream = fopen('php://output', 'w');
+        foreach ($data as $line) {
+            fputcsv($outstream, $line, ';', '"');
+        }
+        fclose($outstream);
+
+        die();
+    }
+
     public function adding_custom_meta_boxes($post)
     {
         add_meta_box(
             'my-meta-box',
             __('Eintrag'),
             function () {
-                global $post;
                 $data = [];
-                foreach (get_post_custom() as $key => $value) {
+                foreach (get_post_custom() as $key => $value) { //TODO Iterate over registered inputs instead
                     if (isset($this->fields[$key])) {
-                        if ($this->fields[$key]->type === 'array') {
+                        if ('array' === $this->fields[$key]->type) {
                             $data[$key] = json_decode($value[0], true);
                         } elseif (is_callable($this->fields[$key]->format)) {
                             $data[$key] = ($this->fields[$key]->format)($value[0]);
@@ -306,8 +383,7 @@ class Formendpoint
                     }
                 }
 
-                echo $post->post_content;
-                echo $this->template_replace('{{all}}', $data, 'all');
+                echo $this->template_replace('{{all}}', $data, 'all'); //TODO Use templating
             },
             $this->posttype,
             'normal'
@@ -337,8 +413,8 @@ class Formendpoint
             $markup .= '<p>';
             $markup .= '<b>'.esc_html($field->label ?: $field->name).': </b>';
 
-            if ($field->type !== 'array') {
-                $markup .= $field->type === 'textarea' ? '<br>' : '';
+            if ('array' !== $field->type) {
+                $markup .= 'textarea' === $field->type ? '<br>' : '';
                 $markup .= nl2br(esc_html($value));
                 $template_content[$key] = nl2br(esc_html($value));
                 $markup .= '</p>';
