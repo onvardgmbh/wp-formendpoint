@@ -168,6 +168,8 @@ class Formendpoint
         ]);
         $this->data = array_merge(array_flip($flatten), $this->data);
         $this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
+        $this->data['referrer'] = $_SERVER['HTTP_REFERER'] ?? '';
+        $this->data['referrer_post_id'] = $this->getReferrerId($_SERVER['HTTP_REFERER'] ?? '');
         foreach ($this->data as $key => $value) {
             if (is_array($value)) {
                 add_post_meta($post_id, $key, addslashes(json_encode($value)));
@@ -453,5 +455,25 @@ class Formendpoint
         }
 
         return $replaced;
+    }
+
+    /**
+     * Returns the ID of the post of the given referrer URL.
+     *
+     * @param $url {string} - The referrer URL
+     *
+     * @return {int} - The id of the given URL
+     */
+    private function getReferrerId(string $url): int
+    {
+        if ('' === $url) {
+            return 0;
+        }
+        if (untrailingslashit($url) === home_url()) {
+            return (int) get_option('page_on_front');
+        }
+        $ref_url_slug = basename(untrailingslashit(trim(parse_url($url, PHP_URL_PATH), '/')));
+
+        return get_page_by_path($ref_url_slug, OBJECT, get_post_types())->ID ?? 0;
     }
 }
