@@ -131,6 +131,22 @@ Registers honeypots to the form. The form submission fails if a bot submits a di
 ```
 Adds form actions which will be called when the form is successfully submitted.
 
+### csvExport($callback = null)
+
+```php
+    ->csvExport()
+```
+Adds a CSV download button to the post type overview page.
+
+```php
+    ->csvExport(function(array $fields, array $data) {
+        return collect($data)->map(function($item) {
+            $item['index'] = 'value';
+            return $item;
+        })->toArray();
+    })
+```
+Modify the content of the CSV file.
 
 #### Email::make( $recipient, $subject, $body )
 
