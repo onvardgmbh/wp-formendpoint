@@ -134,10 +134,6 @@ class Formendpoint
             ? json_decode(file_get_contents('php://input'), true)
             : $_POST;
 
-        if (!wp_verify_nonce($this->data['security'], $this->posttype)) {
-            wp_die('', '', ['response' => 403]);
-        }
-
         unset($this->data['security']);
         unset($this->data['action']);
         if (isset($this->validate_function) && !($this->validate_function)($this->fields)) {
