@@ -333,17 +333,23 @@ class Formendpoint
         $query->get_posts();
 
         // First line with column headings
-        $data = [array_map(function ($input) {
+        $heading = array_map(function ($input) {
             return $input->label ?? $input->name;
-        }, $this->fields)];
+        }, $this->fields);
+        $heading[] = 'id';
+        $heading[] = 'date';
+        $data = [$heading];
 
         // Collect the posts
         while ($query->have_posts()) {
             $query->the_post();
             global $post;
-            $data[] = array_map(function ($input) use ($post) {
+            $item = array_map(function ($input) use ($post) {
                 return get_post_meta($post->ID, $input->name, true);
             }, $this->fields);
+            $item['id'] = $post->ID;
+            $item['date'] = get_the_date('c');
+            $data[] = $item;
         }
 
         if (is_callable($this->csvExportCallback)) {
