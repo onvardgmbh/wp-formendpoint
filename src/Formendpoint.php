@@ -204,7 +204,7 @@ class Formendpoint
 
     private function sanitizeField(array &$data, array &$fields, string $key, $value)
     {
-        if (!isset($fields[$key]) || (!isset($data[$key]) || '' === $data[$key] || !count($data[$key]))) {
+        if (!isset($fields[$key]) || (!isset($data[$key]) || '' === $data[$key] || (is_array($data[$key]) && count($data[$key]) === 0))) {
             unset($data[$key]);
 
             return;
@@ -238,7 +238,7 @@ class Formendpoint
     private function validateField(Input $field, $value)
     {
         if ('array' !== $field->type) {
-            if (isset($field->required) && (!isset($value) || '' === $value || !count($value))) {
+            if (isset($field->required) && (!isset($value) || '' === $value)) {
                 wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
             }
             if ('email' === $field->type && (isset($field->required) || !empty($value)) && !is_email($value)) {
