@@ -164,7 +164,7 @@ class Formendpoint
 
         foreach ($images as $input) {
             if ('application/json' === $_SERVER['CONTENT_TYPE']) {
-	            wp_die('Error: Fileupload not supported in json mode', '', ['response' => 400]);
+                wp_die('Error: Fileupload not supported in json mode', '', ['response' => 400]);
                 continue;
             }
             $uploadedFiles = [];
@@ -421,8 +421,6 @@ class Formendpoint
                             $data[$key] = json_decode($value[0], true);
                         } elseif (is_callable($this->fields[$key]->format)) {
                             $data[$key] = ($this->fields[$key]->format)($value[0]);
-                        } elseif (in_array($this->fields[$key]->type, ['files', 'file'])) {
-                            $data[$key] = json_decode($value[0], true);
                         } else {
                             $data[$key] = $value[0];
                         }
@@ -485,7 +483,7 @@ class Formendpoint
             } elseif (in_array($field->type, ['files', 'file'])) {
                 $files = implode(', ', array_map(function ($item) {
                     return '<a href="'.$item['url'].'" target="_blank">'.basename($item['url']).'</a>';
-                }, $value));
+                }, json_decode($value, true)));
                 $markup .= $files;
                 $template_content[$key] = $files;
                 $markup .= '</p>';
