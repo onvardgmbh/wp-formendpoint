@@ -151,12 +151,52 @@ class Formendpoint
             $this->sanitizeField($this->data, $this->fields, $key, $value);
         }
         $flatten = [];
+        $images = [];
         foreach ($this->fields as $field) {
             $this->validateField($field, $this->data[$field->name] ?? null);
             if (!empty($this->data[$field->name])) {
                 $flatten[] = $field->name;
             }
+            if (in_array($field->type, ['files', 'file']) && isset($_FILES[$field->name])) {
+                $images[] = $field;
+            }
         }
+
+        foreach ($images as $input) {
+            if ('application/json' === $_SERVER['CONTENT_TYPE']) {
+	            wp_die('Error: Fileupload not supported in json mode', '', ['response' => 400]);
+                continue;
+            }
+            $uploadedFiles = [];
+
+            if ('files' === $input->type) {
+                $files = $_FILES[$input->name];
+                foreach ($files['name'] as $key => $value) {
+                    if ($files['name'][$key]) {
+                        $file = [
+                            'name' => $files['name'][$key],
+                            'type' => $files['type'][$key],
+                            'tmp_name' => $files['tmp_name'][$key],
+                            'error' => $files['error'][$key],
+                            'size' => $files['size'][$key],
+                        ];
+                        $file = wp_handle_upload($file, ['action' => $this->posttype]);
+                        if (!$file || isset($file['error'])) {
+                            wp_die('Fileupload failed.', '', ['response' => 400]);
+                        }
+                        $uploadedFiles[] = $file;
+                    }
+                }
+            } else {
+                $file = wp_handle_upload($_FILES[$input->name], ['action' => $this->posttype]);
+                if (!$file || isset($file['error'])) {
+                    wp_die('Fileupload failed.', '', ['response' => 400]);
+                }
+                $uploadedFiles[] = $file;
+            }
+            $this->data[$input->name] = json_encode($uploadedFiles);
+        }
+
         $post_id = wp_insert_post([
             'post_title' => $this->entryTitle,
             'post_status' => 'publish',
@@ -204,7 +244,7 @@ class Formendpoint
 
     private function sanitizeField(array &$data, array &$fields, string $key, $value)
     {
-        if (!isset($fields[$key]) || (!isset($data[$key]) || '' === $data[$key] || (is_array($data[$key]) && count($data[$key]) === 0))) {
+        if (!isset($fields[$key]) || (!isset($data[$key]) || '' === $data[$key] || (is_array($data[$key]) && 0 === count($data[$key])))) {
             unset($data[$key]);
 
             return;
@@ -381,6 +421,8 @@ class Formendpoint
                             $data[$key] = json_decode($value[0], true);
                         } elseif (is_callable($this->fields[$key]->format)) {
                             $data[$key] = ($this->fields[$key]->format)($value[0]);
+                        } elseif (in_array($this->fields[$key]->type, ['files', 'file'])) {
+                            $data[$key] = json_decode($value[0], true);
                         } else {
                             $data[$key] = $value[0];
                         }
@@ -417,12 +459,7 @@ class Formendpoint
             $markup .= '<p>';
             $markup .= '<b>'.esc_html($field->label ?: $field->name).': </b>';
 
-            if ('array' !== $field->type) {
-                $markup .= 'textarea' === $field->type ? '<br>' : '';
-                $markup .= nl2br(esc_html($value));
-                $template_content[$key] = nl2br(esc_html($value));
-                $markup .= '</p>';
-            } else {
+            if ('array' === $field->type) {
                 $markup .= '</p>';
                 $tableinput = '<table class="wp-list-table widefat fixed striped" cellspacing="0" style="width: 100%;"><thead><tr>';
                 foreach ($field->repeats as $repeated_field) {
@@ -445,6 +482,18 @@ class Formendpoint
                 $tableinput .= '</tbody></table>';
                 $template_content[$key] = $tableinput;
                 $markup .= $tableinput;
+            } elseif (in_array($field->type, ['files', 'file'])) {
+                $files = implode(', ', array_map(function ($item) {
+                    return '<a href="'.$item['url'].'" target="_blank">'.basename($item['url']).'</a>';
+                }, $value));
+                $markup .= $files;
+                $template_content[$key] = $files;
+                $markup .= '</p>';
+            } else {
+                $markup .= 'textarea' === $field->type ? '<br>' : '';
+                $markup .= nl2br(esc_html($value));
+                $template_content[$key] = nl2br(esc_html($value));
+                $markup .= '</p>';
             }
         }
 
@@ -453,7 +502,7 @@ class Formendpoint
         }, $template_string);
 
         if (!empty($markup_template)) {
-            $replaced = preg_replace('/{{\s*'.$markup_template.'\s*}}/i', addslashes($markup), $replaced);
+            $replaced = preg_replace('/{{\s*'.$markup_template.'\s*}}/i', $markup, $replaced);
         }
 
         return $replaced;
