@@ -63,11 +63,11 @@ Formendpoint::make( 'formentry', 'Form' )
 
 Container::make( 'theme_options', 'Settings' )
     ->set_page_parent( 'edit.php?post_type=formentry' )
-    ->add_fields( array(
+    ->add_fields( [
         Field::make( 'text', 'contactform_subject', 'Subject' ),
         Field::make( 'textarea', 'contactform_text1', 'Text before input' ),
         Field::make( 'textarea', 'contactform_text2', 'Text after input' )
-    ) );
+    ] );
 ```
 ## APIs
 
@@ -111,7 +111,11 @@ Creates the formendpoint with a menu item in the wordpress backend.
 Registers the form input fields. The form only accepts and saves registered inputs. If a required inputs is missing the form fails.
 #### Input::make( $type, $name, $label=null )
 
- - $type: string ('text' or 'email') - Type 'text' accepts all text input. Type 'email' checks for valid email addresses
+ - $type: accepts:
+   - 'text': normal text input 
+   - 'email': checks for valid email addresses
+   - 'file': single uploaded file (form-data requests only)
+   - 'files': multiple uploaded files (form-data requests only)
  - $name: string - Name of the input field.
  - $label: string (optional) - Label displayed when viewing the form entry in the backend.
 
@@ -157,3 +161,52 @@ Modify the content of the CSV file.
 #### Callback::make( $function )
 
  - $function: anonymous function
+
+
+## Examples
+
+### Fileupload
+
+<blockquote>
+    Fileuploads are only possible in "multipart/form-data" mode. The "application/json" mode is not supported.
+</blockquote>
+
+
+#### Upload single file
+Add a file type input element to the form. 
+```html
+<form enctype="multipart/form-data">
+    <!-- [..] -->
+    <input type="file" name="avatar">
+    <!-- [..] -->
+</form>
+```
+
+Use the string `'file'` for the input type.
+```php
+Formendpoint::make('application_form', __('ApplicationForm', 'wptheme'), 'bundlejs')
+    ->add_fields([
+        // [..]
+        Input::make('file', 'avatar', __('Avatar', 'wptheme')),
+    ]);
+```
+
+#### Upload multiple files
+Add a file type input element to the form. Append a `[]` to the name of the element and add a `multiple` attribute.
+```html
+<form enctype="multipart/form-data">
+    <!-- [..] -->
+    <input type="file" name="avatar[]" multiple>
+    <!-- [..] -->
+</form>
+```
+
+Use the string `'files'` (plural!) if you want to allow multiple files.
+```php
+Formendpoint::make('application_form', __('ApplicationForm', 'wptheme'), 'bundlejs')
+    ->add_fields([
+        // [..]
+        Input::make('files', 'avatar', __('Avatar', 'wptheme')),
+    ]);
+```
+
