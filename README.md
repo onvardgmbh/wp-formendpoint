@@ -69,8 +69,9 @@ Container::make( 'theme_options', 'Settings' )
         Field::make( 'textarea', 'contactform_text2', 'Text after input' )
     ] );
 ```
-## APIs
 
+
+## APIs
 ### Formendpoint::make( $posttype, $heading, $handle = 'main' )
 Creates the formendpoint with a menu item in the wordpress backend.
 
@@ -109,8 +110,8 @@ Creates the formendpoint with a menu item in the wordpress backend.
     ] );
 ```
 Registers the form input fields. The form only accepts and saves registered inputs. If a required inputs is missing the form fails.
-#### Input::make( $type, $name, $label=null )
 
+#### Input::make( $type, $name, $label=null )
  - $type: accepts:
    - 'text': normal text input 
    - 'email': checks for valid email addresses
@@ -136,7 +137,6 @@ Registers honeypots to the form. The form submission fails if a bot submits a di
 Adds form actions which will be called when the form is successfully submitted.
 
 ### csvExport($callback = null)
-
 ```php
     ->csvExport()
 ```
@@ -153,24 +153,17 @@ Adds a CSV download button to the post type overview page.
 Modify the content of the CSV file.
 
 #### Email::make( $recipient, $subject, $body )
-
  - $recipient: string || array || anonymous function returning string or array
  - $subject: string || anonymous function returning string
  - $body: string || anonymous function returning string
 
 #### Callback::make( $function )
-
  - $function: anonymous function
 
 
 ## Examples
-
 ### Fileupload
-
-<blockquote>
-    Fileuploads are only possible in "multipart/form-data" mode. The "application/json" mode is not supported.
-</blockquote>
-
+> Fileuploads are only possible in "multipart/form-data" mode. The "application/json" mode is not supported.
 
 #### Upload single file
 Add a file type input element to the form. 
@@ -196,7 +189,7 @@ Add a file type input element to the form. Append a `[]` to the name of the elem
 ```html
 <form enctype="multipart/form-data">
     <!-- [..] -->
-    <input type="file" name="avatar[]" multiple>
+    <input type="file" name="avatars[]" multiple>
     <!-- [..] -->
 </form>
 ```
@@ -206,7 +199,6 @@ Use the string `'files'` (plural!) if you want to allow multiple files.
 Formendpoint::make('application_form', __('ApplicationForm', 'wptheme'), 'bundlejs')
     ->add_fields([
         // [..]
-        Input::make('files', 'avatar', __('Avatar', 'wptheme')),
+        Input::make('files', 'avatars', __('Avatars', 'wptheme')),
     ]);
 ```
-
