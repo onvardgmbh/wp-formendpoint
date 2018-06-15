@@ -157,7 +157,10 @@ class Formendpoint
             if (!empty($this->data[$field->name])) {
                 $flatten[] = $field->name;
             }
-            if (in_array($field->type, ['files', 'file']) && isset($_FILES[$field->name])) {
+            if ('file' === $field->type && !empty($_FILES[$field->name]['tmp_name'])) {
+                $images[] = $field;
+            }
+            if ('files' === $field->type && !empty($_FILES[$field->name]['tmp_name'][0])) {
                 $images[] = $field;
             }
         }
@@ -277,17 +280,7 @@ class Formendpoint
      */
     private function validateField(Input $field, $value)
     {
-        if ('array' !== $field->type) {
-            if (isset($field->required) && (!isset($value) || '' === $value)) {
-                wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
-            }
-            if ('email' === $field->type && (isset($field->required) || !empty($value)) && !is_email($value)) {
-                wp_die($value.' is not a valid email address.', '', ['response' => 400]);
-            }
-            if (isset($field->title)) {
-                $this->entryTitle .= ($this->data[$field->name] ?? '').' ';
-            }
-        } else {
+        if ('array' === $field->type) {
             if (isset($field->required) && !is_array($value)) {
                 wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
             }
@@ -307,6 +300,36 @@ class Formendpoint
                     }
                 }
             }
+
+            return;
+        }
+
+        if ('file' === $field->type) {
+            if (isset($field->required) && empty($_FILES[$field->name]['tmp_name'])) {
+                wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
+            }
+
+            return;
+        }
+
+        if ('files' === $field->type) {
+            if (isset($field->required) && empty($_FILES[$field->name]['tmp_name'][0])) {
+                wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
+            }
+
+            return;
+        }
+
+        if (isset($field->required) && (!isset($value) || '' === $value)) {
+            wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
+        }
+
+        if ('email' === $field->type && (isset($field->required) || !empty($value)) && !is_email($value)) {
+            wp_die($value.' is not a valid email address.', '', ['response' => 400]);
+        }
+
+        if (isset($field->title)) {
+            $this->entryTitle .= ($this->data[$field->name] ?? '').' ';
         }
     }
 
