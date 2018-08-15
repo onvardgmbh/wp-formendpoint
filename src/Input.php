@@ -10,6 +10,7 @@ class Input
     public $name;
     public $repeats;
     public $required;
+    public $validationFunction;
     public $title;
     public $type;
 
@@ -35,6 +36,22 @@ class Input
         $this->title = true;
 
         return $this;
+    }
+
+    public function setValidationFunction($validationFunction)
+    {
+        $this->validationFunction = $validationFunction;
+
+        return $this;
+    }
+
+    public function isValid($value, $formData)
+    {
+        if (is_callable($this->validationFunction)) {
+            return ($this->validationFunction)($value, $formData);
+        }
+
+        return true;
     }
 
     /**
