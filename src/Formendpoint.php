@@ -130,6 +130,8 @@ class Formendpoint
 
     public function handleformsubmit()
     {
+        add_filter('sanitize_file_name', [$this, 'getRandomizedFilename'], 10);
+
         $this->data = 'application/json' === $_SERVER['CONTENT_TYPE']
             ? json_decode(file_get_contents('php://input'), true)
             : $_POST;
@@ -150,6 +152,11 @@ class Formendpoint
         foreach ($this->data as $key => $value) {
             $this->sanitizeField($this->data, $this->fields, $key, $value);
         }
+
+        $this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
+        $this->data['referrer'] = $_SERVER['HTTP_REFERER'] ?? '';
+        $this->data['referrer_post_id'] = $this->getReferrerId($_SERVER['HTTP_REFERER'] ?? '');
+
         $flatten = [];
         $images = [];
         foreach ($this->fields as $field) {
@@ -206,9 +213,6 @@ class Formendpoint
             'post_type' => $this->posttype,
         ]);
         $this->data = array_merge(array_flip($flatten), $this->data);
-        $this->data['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
-        $this->data['referrer'] = $_SERVER['HTTP_REFERER'] ?? '';
-        $this->data['referrer_post_id'] = $this->getReferrerId($_SERVER['HTTP_REFERER'] ?? '');
         foreach ($this->data as $key => $value) {
             if (is_array($value)) {
                 add_post_meta($post_id, $key, addslashes(json_encode($value)));
@@ -321,11 +325,15 @@ class Formendpoint
         }
 
         if (isset($field->required) && (!isset($value) || '' === $value)) {
-            wp_die('Field "'.$field->name.'"is required', '', ['response' => 400]);
+            wp_die('Field "'.$field->name.'" is required', '', ['response' => 400]);
         }
 
         if ('email' === $field->type && (isset($field->required) || !empty($value)) && !is_email($value)) {
             wp_die($value.' is not a valid email address.', '', ['response' => 400]);
+        }
+
+        if (!$field->isValid($value, $this->data)) {
+            wp_die('Field "'.$field->name.'" is not valid.', '', ['response' => 400]);
         }
 
         if (isset($field->title)) {
@@ -547,5 +555,25 @@ class Formendpoint
         $ref_url_slug = basename(untrailingslashit(trim(parse_url($url, PHP_URL_PATH), '/')));
 
         return get_page_by_path($ref_url_slug, OBJECT, get_post_types())->ID ?? 0;
+    }
+
+    /**
+     * Takes a filename and returns a randomized basename.
+     *
+     * @param string $filename
+     *
+     * @return string - Random filename
+     */
+    public function getRandomizedFilename(string $filename): string
+    {
+        $characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        $basename = '';
+        $max = strlen($characters) - 1;
+        for ($i = 0; $i < 40; ++$i) {
+            $basename .= $characters[mt_rand(0, $max)];
+        }
+        $file = pathinfo($filename);
+
+        return $basename.'.'.$file['extension'];
     }
 }
