@@ -263,7 +263,7 @@ class Formendpoint
                 foreach ($value2 as $subsubbkey => $value3) {
                     if (!isset($fields[$key]->repeats[$subsubbkey])
                          || !isset($data[$key][$subkey][$subsubbkey])
-                         || !count($data[$key][$subkey][$subsubbkey])
+                         || is_array($data[$key][$subkey][$subsubbkey]) && !count($data[$key][$subkey][$subsubbkey])
                          || $data[$key][$subkey][$subsubbkey] === ''
                     ) {
                         unset($data[$key][$subkey][$subsubbkey]);
@@ -295,8 +295,8 @@ class Formendpoint
             foreach ($value as $userinput) {
                 foreach ($field->repeats as $subfield) {
                     if ('array' !== $subfield->type) {
-                        $this->validateField($subfield, $userinput[$subfield->name]);
-                        if (isset($field->title)) {
+                        $this->validateField($subfield, $userinput[$subfield->name] ?? null);
+                        if (isset($field->title) && !empty($userinput[$subfield->name])) {
                             $this->entryTitle .= $userinput[$subfield->name].' ';
                         }
                     } else {
