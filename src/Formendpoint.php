@@ -237,10 +237,20 @@ class Formendpoint
                     ? ($action->body)($post_id, $this->fields, $this->data)
                     : $action->body;
 
+                if ($action->replyTo) {
+                    $replyTo = 'object' === gettype($action->replyTo)
+                        ? ($action->replyTo)($post_id, $this->fields, $this->data)
+                        : $action->replyTo;
+                }
+
                 if ($recipient && $subject && $body) {
                     wp_mail($recipient, $this->template_replace($subject, $this->data),
                         $this->template_replace($body, $this->data, 'Alle inputs'),
-                        array('Content-Type: text/html; charset=UTF-8'));
+                        [
+                            'Reply-To: '.$replyTo,
+                            'Content-Type: text/html; charset=UTF-8',
+                        ]
+                    );
                 }
             } elseif ('Onvardgmbh\Formendpoint\Callback' === get_class($action)) {
                 ($action->function)($post_id, $this->fields, $this->data);
