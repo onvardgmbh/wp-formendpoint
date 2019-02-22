@@ -158,6 +158,18 @@ Modify the content of the CSV file.
  - $subject: string || anonymous function returning string
  - $body: string || anonymous function returning string
 
+##### ReplyTo
+Register ReplyTo address via callable or string
+```php
+    Email::make(...)->replyTo(function($post_id, $fields, $data){
+        return 'max@mustermann.de, peter@pan.de, ...';
+    });
+```
+OR
+```php
+    Email::make(...)->replyTo('max@mustermann.de, peter@pan.de, ...');
+```
+
 #### Callback::make( $function )
  - $function: anonymous function
 
