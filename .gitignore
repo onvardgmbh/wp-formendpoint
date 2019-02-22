@@ -1,3 +1,5 @@
+.env
 .idea
 vendor
 .php_cs.cache
+wordpress/
