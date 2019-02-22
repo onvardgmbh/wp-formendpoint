@@ -7,6 +7,7 @@ class Email
     public $recipient;
     public $subject;
     public $body;
+    public $replyTo;
 
     /**
      * @param string|callable $recipient
@@ -21,5 +22,15 @@ class Email
         $action->body = $body;
 
         return $action;
+    }
+
+    /**
+     * @param string|callable $replyTo
+     */
+    public function replyTo($replyTo)
+    {
+        $this->replyTo = $replyTo;
+
+        return $this;
     }
 }
