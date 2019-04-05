@@ -247,7 +247,7 @@ class Formendpoint
                     wp_mail($recipient, $this->template_replace($subject, $this->data),
                         $this->template_replace($body, $this->data, 'Alle inputs'),
                         [
-                            'Reply-To: '.$replyTo,
+                            isset($replyTo) ? 'Reply-To: '.$replyTo : '',
                             'Content-Type: text/html; charset=UTF-8',
                         ]
                     );
