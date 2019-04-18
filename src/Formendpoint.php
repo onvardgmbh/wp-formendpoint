@@ -107,7 +107,12 @@ class Formendpoint
         return $this;
     }
 
-    public function show_in_menu(bool $showInMenu): Formendpoint
+    /**
+     * Set the 'show_in_menu' argument to the register_post_type call.
+     *
+     * @param bool|string $showInMenu
+     */
+    public function show_in_menu($showInMenu): Formendpoint
     {
         $this->showInMenu = $showInMenu;
 
