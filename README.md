@@ -43,7 +43,9 @@ Formendpoint::make( 'formentry', 'Form' )
         Honeypot::make( 'text', '' ),
     ] )
     ->add_fields( [
-        Input::make( 'email', 'mail' )
+        Input::make('text', 'firstname', __('First name', 'wptheme'))->required()->setTitle(),
+        Input::make('text', 'name', __('Name', 'wptheme'))->required()->setTitle(),
+        Input::make('email', 'email', __('Email', 'wptheme'))->required(),
     ] )
     ->add_actions( [
         Email::make( function() {
@@ -51,23 +53,32 @@ Formendpoint::make( 'formentry', 'Form' )
                 return $_POST['mail'];
             }
         }, function() {
-            return carbon_get_theme_option( 'contactform_subject' );
-        }, function() {
-            $message = carbon_get_theme_option( 'contactform_text1' );
-            foreach ( $_POST as $key => $value ) {
-                $message .= '<p><b>'. esc_html( $key ) . ':</b> ' . nl2br( esc_html( $value ) ) . '</p>';
-            }
-            $message .= carbon_get_theme_option( 'contactform_text2' );
-            return $message;
+            return carbon_get_theme_option( 'crb_contact_form_subject' );
+        }, function($postId, $fields, $rawData, $formattedData) {
+            $rows = collect($fields)
+                ->filter(function ($field) use ($formattedData) {
+                    return isset($formattedData[$field->name]);
+                })
+                ->mapWithKeys(function ($field) use ($formattedData) {
+                    $value = $formattedData[$field->name];
+                    return [$field->label => __($value, 'wptheme')];
+                });
+            return bladerunner('emails.contact-form-customer-success', [
+                'rows' => $rows,
+                'heading' => $this->themeOptions->getOption('crb_contact_form_heading'),
+                'intro' => $this->themeOptions->getOption('crb_contact_form_intro'),
+                'footer' => $this->themeOptions->getOption('crb_contact_form_footer'),
+            ], false);
         } )
     ] );
 
 Container::make( 'theme_options', 'Settings' )
     ->set_page_parent( 'edit.php?post_type=formentry' )
     ->add_fields( [
-        Field::make( 'text', 'contactform_subject', 'Subject' ),
-        Field::make( 'textarea', 'contactform_text1', 'Text before input' ),
-        Field::make( 'textarea', 'contactform_text2', 'Text after input' )
+        Field::make( 'text', 'crb_contact_form_subject', 'Subject' ),
+        Field::make('rich_text', 'crb_contact_form_heading', __('ContactForm Heading', 'wptheme')),
+        Field::make('rich_text', 'crb_contact_form_intro', __('ContactForm Intro', 'wptheme')),
+        Field::make('rich_text', 'crb_contact_form_footer', __('ContactForm Footer', 'wptheme')),
     ] );
 ```
 
