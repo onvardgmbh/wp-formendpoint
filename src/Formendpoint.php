@@ -228,23 +228,40 @@ class Formendpoint
             }
         }
 
+        $formattedData = $this->data;
+
+        foreach ($formattedData as $key => &$value) {
+            $value = str_replace('{{', '&#123;&#123;', $value);
+            $value = str_replace('}}', '&#125;&#125;', $value);
+
+            $field = $this->fields[$key];
+
+            if (is_callable($field->format)) {
+                //Converting booleans into strings since the ->setFormat method also receives values from the wordpress database and Wordpress converts boolean post metas to strings
+                if (is_bool($value)) {
+                    $value = $value ? 'true' : 'false';
+                }
+                $value = ($field->format)($value);
+            }
+        }
+
         foreach ($this->actions as $action) {
             if ('Onvardgmbh\Formendpoint\Email' === get_class($action)) {
                 $recipient = 'object' === gettype($action->recipient)
-                    ? ($action->recipient)($post_id, $this->fields, $this->data)
+                    ? ($action->recipient)($post_id, $this->fields, $this->data, $formattedData)
                     : $action->recipient;
 
                 $subject = 'object' === gettype($action->subject)
-                    ? ($action->subject)($post_id, $this->fields, $this->data)
+                    ? ($action->subject)($post_id, $this->fields, $this->data, $formattedData)
                     : $action->subject;
 
                 $body = 'object' === gettype($action->body)
-                    ? ($action->body)($post_id, $this->fields, $this->data)
+                    ? ($action->body)($post_id, $this->fields, $this->data, $formattedData)
                     : $action->body;
 
                 if ($action->replyTo) {
                     $replyTo = 'object' === gettype($action->replyTo)
-                        ? ($action->replyTo)($post_id, $this->fields, $this->data)
+                        ? ($action->replyTo)($post_id, $this->fields, $this->data, $formattedData)
                         : $action->replyTo;
                 }
 
@@ -258,7 +275,7 @@ class Formendpoint
                     );
                 }
             } elseif ('Onvardgmbh\Formendpoint\Callback' === get_class($action)) {
-                ($action->function)($post_id, $this->fields, $this->data);
+                ($action->function)($post_id, $this->fields, $this->data, $formattedData);
             }
         }
         wp_die();
