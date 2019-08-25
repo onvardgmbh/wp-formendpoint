@@ -183,6 +183,10 @@ class Formendpoint
                 continue;
             }
             $uploadedFiles = [];
+            $overrides = ['action' => $this->posttype];
+            if (!empty($input->allowedMimeTypes)) {
+                $overrides['mimes'] = $input->allowedMimeTypes;
+            }
 
             if ('files' === $input->type) {
                 $files = $_FILES[$input->name];
@@ -195,7 +199,7 @@ class Formendpoint
                             'error' => $files['error'][$key],
                             'size' => $files['size'][$key],
                         ];
-                        $file = wp_handle_upload($file, ['action' => $this->posttype]);
+                        $file = wp_handle_upload($file, $overrides);
                         if (!$file || isset($file['error'])) {
                             wp_die('Fileupload failed.', '', ['response' => 400]);
                         }
@@ -203,7 +207,7 @@ class Formendpoint
                     }
                 }
             } else {
-                $file = wp_handle_upload($_FILES[$input->name], ['action' => $this->posttype]);
+                $file = wp_handle_upload($_FILES[$input->name], $overrides);
                 if (!$file || isset($file['error'])) {
                     wp_die('Fileupload failed.', '', ['response' => 400]);
                 }

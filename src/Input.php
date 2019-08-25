@@ -13,6 +13,7 @@ class Input
     public $validationFunction;
     public $title;
     public $type;
+    public $allowedMimeTypes;
 
     public static function make($type, $name, $label = null)
     {
@@ -70,6 +71,13 @@ class Input
     public function setFormat($callback)
     {
         $this->format = $callback;
+
+        return $this;
+    }
+
+    public function setAllowedMimeTypes($array)
+    {
+        $this->allowedMimeTypes = $array;
 
         return $this;
     }
