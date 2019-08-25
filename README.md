@@ -205,6 +205,11 @@ Formendpoint::make('application_form', __('ApplicationForm', 'wptheme'), 'bundle
     ->add_fields([
         // [..]
         Input::make('file', 'avatar', __('Avatar', 'wptheme')),
+    ])
+    //Define allowed mime types (this is optional)
+    ->setAllowedMimeTypes([
+        'jpg' => 'image/jpeg',
+        'png' => 'image/png',
     ]);
 ```
 
